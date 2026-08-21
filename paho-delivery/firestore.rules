@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Catálogo público: cualquiera puede leer productos y categorías.
+    // Cada vendedor solo puede crear/editar/borrar SUS propios productos
+    // (valida vendedorId == su uid). Las categorías las administra PAHO
+    // (Admin SDK / consola), no los vendedores.
+    match /productos/{productoId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.vendedorId;
+      allow update, delete: if request.auth != null
+        && request.auth.uid == resource.data.vendedorId;
+    }
+
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Vendedores: contiene datos fiscales (CUIT, razón social, documento de
+    // facturación), así que NO es de lectura pública. El nombre que se ve
+    // en el catálogo ya está desnormalizado en cada producto. Solo el
+    // propio vendedor puede leer y escribir su perfil.
+    match /vendedores/{vendedorId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == vendedorId;
+      allow delete: if false;
+    }
+
+    // Perfil general de usuario (comprador o vendedor). Cada usuario solo
+    // puede leer/escribir su propio documento.
+    match /usuarios/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Órdenes: se crean solo desde el servidor (API route con Admin SDK,
+    // que arma el objeto `facturacion` con el mínimo indispensable —
+    // nombre, tipo/número de documento, condición IVA — nunca el email de
+    // la cuenta. Cuando el método de entrega es "domicilio", también se
+    // guarda la dirección y un teléfono de contacto puntual para ese
+    // envío. Cuando es "retiro", se copia la dirección EXACTA del local
+    // desde el perfil privado del vendedor — recién en este momento, no
+    // antes: mientras el comprador solo navegaba el catálogo, únicamente
+    // veía el barrio general. Desde el cliente, cada parte solo puede
+    // LEER las órdenes donde participa: el comprador las suyas, el
+    // vendedor las que le corresponden.
+    match /ordenes/{ordenId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.compradorId ||
+         request.auth.uid == resource.data.vendedorId);
+
+      // Excepción quirúrgica, estilo Mercado Libre: el vendedor de esa
+      // orden puede marcarla como entregada, pero SOLO puede tocar
+      // entrega y entregaConfirmadaEn — ningún otro campo (total,
+      // facturación, dirección del comprador, estado de pago, etc.)
+      // hasOnly() hace que cualquier intento de cambiar algo más se
+      // rechace, aunque venga junto con el cambio de entrega válido.
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.vendedorId
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['entrega', 'entregaConfirmadaEn']);
+
+      allow create, delete: if false;
+    }
+  }
+}

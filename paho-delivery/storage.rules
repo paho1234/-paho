@@ -1,0 +1,24 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Documentos de facturación del vendedor (constancia AFIP, etc).
+    // Solo el propio vendedor puede subir/leer/borrar los suyos.
+    match /vendedores/{vendedorId}/documentos/{archivo} {
+      allow read: if request.auth != null && request.auth.uid == vendedorId;
+      allow write: if request.auth != null && request.auth.uid == vendedorId
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/jpeg|image/png');
+    }
+
+    // Fotos de producto: el vendedor solo puede subir dentro de su
+    // propia carpeta. Usado por /vendedor/productos/nuevo.
+    match /productos/{vendedorId}/{archivo} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == vendedorId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
