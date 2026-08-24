@@ -14,7 +14,7 @@ import {
   crearProducto,
   fileABase64,
 } from "@/lib/productos-vendedor";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Upload, Sparkles } from "lucide-react";
 
@@ -58,10 +58,14 @@ export default function NuevoProductoPage() {
   const [precioOriginal, setPrecioOriginal] = useState("");
   const [stock, setStock] = useState("1");
   const [retiro, setRetiro] = useState(true);
-  const [envioDomicilio, setEnvioDomicilio] = useState(false);
-  const [costoEnvio, setCostoEnvio] = useState("");
   const [perfilRetiro, setPerfilRetiro] = useState<PerfilRetiro | null>(null);
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
+  // Costo de envío del vendedor (siempre obligatorio para todo producto).
+  // Se trae del perfil; si una cuenta se registró antes de que este
+  // campo existiera, queda null y se le pide acá — una sola vez, se
+  // guarda de vuelta en su perfil para no volver a preguntarlo.
+  const [costoEnvioPerfil, setCostoEnvioPerfil] = useState<number | null>(null);
+  const [costoEnvioManual, setCostoEnvioManual] = useState("");
 
   useEffect(() => {
     getCategorias().then((cats) => {
@@ -85,6 +89,9 @@ export default function NuevoProductoPage() {
           } else {
             setPerfilRetiro({ ofreceRetiro: false, barrio: "", zona: "" });
             setRetiro(false);
+          }
+          if (typeof data.costoEnvioAMBA === "number") {
+            setCostoEnvioPerfil(data.costoEnvioAMBA);
           }
         }
       })
@@ -156,16 +163,34 @@ export default function NuevoProductoPage() {
         "El precio original tiene que ser mayor al precio de venta."
       );
     if (!stockNum || stockNum <= 0) return setError("Stock inválido.");
-    if (!retiro && !envioDomicilio)
-      return setError("Elegí al menos un método de entrega.");
-    const costoEnvioNum = envioDomicilio ? Number(costoEnvio) : null;
-    if (envioDomicilio && (costoEnvioNum === null || costoEnvioNum < 0 || isNaN(costoEnvioNum)))
-      return setError(
-        "Ingresá el costo de envío (podés poner 0 si es gratis)."
-      );
+
+    // El envío es obligatorio para todo producto. Si el perfil ya tiene
+    // costoEnvioAMBA, se usa ese. Si no (cuenta vieja), se toma el valor
+    // que cargó a mano en este mismo formulario, y de paso se guarda en
+    // su perfil para no volver a pedirlo en la próxima publicación.
+    let costoEnvio: number;
+    if (costoEnvioPerfil !== null) {
+      costoEnvio = costoEnvioPerfil;
+    } else {
+      const manual = Number(costoEnvioManual);
+      if (costoEnvioManual === "" || isNaN(manual) || manual < 0) {
+        return setError(
+          "Ingresá tu costo de envío a AMBA (podés poner 0 si es gratis)."
+        );
+      }
+      costoEnvio = manual;
+    }
 
     setPublicando(true);
     try {
+      if (costoEnvioPerfil === null) {
+        await setDoc(
+          doc(db, "vendedores", user.uid),
+          { costoEnvioAMBA: costoEnvio },
+          { merge: true }
+        );
+      }
+
       const perfilSnap = await getDoc(doc(db, "vendedores", user.uid));
       const nombreVendedor = perfilSnap.exists()
         ? perfilSnap.data().nombreEmpresa
@@ -187,8 +212,8 @@ export default function NuevoProductoPage() {
         imagen,
         envio: {
           retiro,
-          envioDomicilio,
-          costoEnvio: costoEnvioNum,
+          envioDomicilio: true,
+          costoEnvio,
           barrioRetiro:
             retiro && perfilRetiro?.ofreceRetiro
               ? `${perfilRetiro.barrio}, ${perfilRetiro.zona}`
@@ -409,26 +434,38 @@ export default function NuevoProductoPage() {
                   registro. Contactanos para agregarla.
                 </p>
               )}
-              <label className="flex items-center gap-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  checked={envioDomicilio}
-                  onChange={(e) => setEnvioDomicilio(e.target.checked)}
-                  className="accent-ink"
-                />
-                Envío a domicilio (por ahora, solo AMBA: CABA y GBA)
-              </label>
-              {envioDomicilio && (
-                <div className="pl-6">
-                  <Campo
-                    label="Costo de envío (tarifa fija)"
-                    value={costoEnvio}
-                    onChange={setCostoEnvio}
-                    type="number"
-                    hint="Poné 0 si el envío es gratis. Se cobra UNA VEZ por pedido, no por producto — usá el mismo valor en todas tus publicaciones con envío."
-                  />
-                </div>
-              )}
+
+              <div className="pt-2 border-t border-line">
+                <p className="text-sm flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-moss" />
+                  Envío a domicilio (AMBA) — siempre incluido
+                </p>
+                {cargandoPerfil ? (
+                  <p className="text-xs text-charcoal/50 pl-3.5 mt-1">
+                    Cargando tu tarifa…
+                  </p>
+                ) : costoEnvioPerfil !== null ? (
+                  <p className="text-xs text-charcoal/50 pl-3.5 mt-1">
+                    Tu tarifa:{" "}
+                    <strong className="text-charcoal/70">
+                      {costoEnvioPerfil === 0
+                        ? "gratis"
+                        : `$${costoEnvioPerfil.toLocaleString("es-AR")}`}
+                    </strong>{" "}
+                    (definida en tu registro)
+                  </p>
+                ) : (
+                  <div className="pl-3.5 mt-2">
+                    <Campo
+                      label="Costo de envío a AMBA"
+                      value={costoEnvioManual}
+                      onChange={setCostoEnvioManual}
+                      type="number"
+                      hint="Tu cuenta no tiene esto configurado todavía. Poné 0 si es gratis — lo guardamos en tu perfil para no volver a pedirlo."
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

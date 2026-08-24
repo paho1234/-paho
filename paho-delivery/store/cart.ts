@@ -86,8 +86,8 @@ export const useCartStore = create<CartState>()(
         const items = get().items;
         if (items.length === 0) return { retiro: true, envioDomicilio: true };
         return {
-          retiro: items.every((i) => i.envio.retiro),
-          envioDomicilio: items.every((i) => i.envio.envioDomicilio),
+          retiro: items.every((i) => i.envio?.retiro),
+          envioDomicilio: items.every((i) => i.envio?.envioDomicilio),
         };
       },
 
@@ -97,8 +97,26 @@ export const useCartStore = create<CartState>()(
       // salvaguarda por si alguna publicación quedó con un valor
       // desactualizado — en el caso normal, todas comparten el mismo.
       costoEnvioTotal: () =>
-        Math.max(0, ...get().items.map((i) => i.envio.costoEnvio ?? 0)),
+        Math.max(0, ...get().items.map((i) => i.envio?.costoEnvio ?? 0)),
     }),
-    { name: "paho-carrito" }
+    {
+      name: "paho-carrito",
+      // Subimos la versión cada vez que cambia la forma de ItemCarrito
+      // (acá: se agregó `envio`). Un carrito guardado en el navegador
+      // ANTES de ese cambio no tiene ese campo, y sin este migrate
+      // rompía toda la página del carrito al intentar leer
+      // item.envio.retiro de un item sin envio. En vez de mostrar una
+      // pantalla en blanco, si detecta datos de una versión vieja
+      // simplemente vacía el carrito — el comprador solo tiene que
+      // volver a agregar los productos, no es un dato que valga la pena
+      // migrar a mano.
+      version: 2,
+      migrate: (persistedState, version) => {
+        if (version < 2) {
+          return { items: [] };
+        }
+        return persistedState as CartState;
+      },
+    }
   )
 );

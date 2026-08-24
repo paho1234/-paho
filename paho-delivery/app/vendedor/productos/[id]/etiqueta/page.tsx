@@ -137,12 +137,19 @@ export default function EtiquetaPage({ params }: { params: { id: string } }) {
           </div>
         ) : (
           <div className="etiqueta-a4-grid">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: Math.max(1, producto.stock) }).map((_, i) => (
               <div key={i} className="etiqueta-a4-item border border-charcoal/30 p-3">
                 {etiquetaContenido}
               </div>
             ))}
           </div>
+        )}
+
+        {modo === "a4" && (
+          <p className="print:hidden text-xs text-charcoal/50 text-center mt-3">
+            Imprimiendo {Math.max(1, producto.stock)} etiqueta
+            {producto.stock === 1 ? "" : "s"} (según el stock cargado).
+          </p>
         )}
 
         <p className="print:hidden text-xs text-charcoal/50 text-center mt-4">

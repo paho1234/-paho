@@ -137,6 +137,31 @@ export async function getCategorias(): Promise<Categoria[]> {
   }));
 }
 
+/**
+ * Igual que getCategorias(), pero solo devuelve las que tienen al menos
+ * un producto activo. Pensada para el menú público (Header, home) —
+ * evita que el comprador entre a una categoría vacía sin darse cuenta.
+ *
+ * A propósito NO se usa en /vendedor/productos/nuevo: ahí el vendedor
+ * necesita ver TODAS las categorías, incluidas las vacías, para poder
+ * publicar el primer producto de una categoría nueva — si filtráramos
+ * ahí también, esa categoría nunca podría arrancar a tener productos.
+ */
+export async function getCategoriasConProductos(): Promise<Categoria[]> {
+  const [categoriasSnap, productosSnap] = await Promise.all([
+    getDocs(query(collection(db, "categorias"), orderBy("orden", "asc"))),
+    getDocs(query(collection(db, "productos"), where("activo", "==", true))),
+  ]);
+
+  const categoriasConStock = new Set(
+    productosSnap.docs.map((d) => d.data().categoria as string)
+  );
+
+  return categoriasSnap.docs
+    .map((d) => ({ slug: d.id, label: d.data().label as string }))
+    .filter((c) => categoriasConStock.has(c.slug));
+}
+
 export function formatARS(valor: number) {
   return valor.toLocaleString("es-AR", {
     style: "currency",

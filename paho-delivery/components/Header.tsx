@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingBag, User } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import { getCategorias, type Categoria } from "@/lib/firestore";
+import { getCategoriasConProductos, type Categoria } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthProvider";
 import { cerrarSesion } from "@/lib/auth";
 
@@ -14,7 +14,7 @@ export default function Header() {
   const { user, rol, cargando } = useAuth();
 
   useEffect(() => {
-    getCategorias()
+    getCategoriasConProductos()
       .then(setCategorias)
       .catch(() => setCategorias([]));
   }, []);

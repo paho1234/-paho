@@ -109,25 +109,34 @@ por eso el carrito pide login antes de mostrar el botón de Mercado Pago.
 
 ## Envíos
 
-**Fase 1: solo AMBA (CABA + GBA), tarifa fija por vendedor.**
+**Fase 1: solo AMBA (CABA + GBA), envío obligatorio para todo producto, tarifa fija por vendedor.**
 
-Cada producto declara su propio método de entrega (`envio` en
-`lib/firestore.ts`): `retiro` (en el local del vendedor), `envioDomicilio`
-con un `costoEnvio`, o ambos. El costo **no es por producto ni por
-unidad** — es la tarifa fija del vendedor, se cobra **una sola vez por
-pedido**. Como todas las publicaciones de un mismo vendedor deberían
-compartir la misma tarifa, `/vendedor/productos/nuevo` se lo aclara en
-el propio formulario; no hay (todavía) un lugar centralizado donde
-configurarla una sola vez para todas las publicaciones — es una mejora
-pendiente (ver más abajo).
+A diferencia del retiro (opcional), **el envío a domicilio no se puede
+desactivar por producto** — todo lo que se publica lo ofrece. Lo que sí
+define el vendedor es su **tarifa fija**, una sola vez, en
+`vendedores/{uid}.costoEnvioAMBA`:
+
+- Se pide en el registro (`/registro/vendedor`, campo obligatorio).
+- Si una cuenta se registró antes de que este campo existiera (o alguna
+  otra vía dejó el perfil sin este dato), `/vendedor/productos/nuevo` lo
+  detecta (`costoEnvioPerfil === null`) y se lo pide ahí mismo, una sola
+  vez — y de paso lo guarda en el perfil (`setDoc` con `merge: true`)
+  para no volver a preguntarlo en la próxima publicación.
+- Cada producto igual guarda su propio `envio.costoEnvio` (denormalizado
+  desde el perfil al momento de publicar) — así el catálogo público
+  puede mostrar el precio de envío sin necesitar leer el perfil privado
+  del vendedor (que no es de lectura pública, tiene CUIT adentro).
+
+`retiro` sigue siendo el único método realmente opcional — depende de si
+el vendedor cargó una dirección de retiro en su registro.
 
 En el carrito (`app/carrito/page.tsx`):
 
 - Solo se ofrecen los métodos que **todos** los productos del carrito
   soportan a la vez (`metodosDisponibles()` en `store/cart.ts`, hace la
-  intersección). Si no hay ningún método en común, se le pide al
-  comprador separar la compra — misma limitación que ya existía para
-  "un pedido, un solo vendedor".
+  intersección). Como el envío ahora es universal, en la práctica esto
+  solo importa para el retiro: si el carrito mezcla un producto de un
+  vendedor sin retiro configurado, esa opción no aparece.
 - Si elige "envío a domicilio", se piden calle/número/depto/barrio-
   partido/código postal, un selector de **zona** limitado a `CABA` o
   `GBA` (no hay campo de provincia libre — está restringido a propósito,
@@ -139,7 +148,14 @@ En el carrito (`app/carrito/page.tsx`):
 - `costoEnvioTotal()` en `store/cart.ts` toma el **máximo** declarado
   entre los ítems del carrito (no la suma) — es una salvaguarda por si
   alguna publicación quedó con un valor viejo; en el caso normal, todas
-  las publicaciones de un mismo vendedor declaran el mismo número.
+  las publicaciones de un mismo vendedor declaran el mismo número (ahora
+  garantizado por venir del mismo perfil, no retipeado a mano cada vez).
+
+**Limitación conocida:** los productos publicados *antes* de este
+cambio (con el viejo checkbox "Envío a domicilio" opcional) no se
+actualizan solos — si alguno quedó sin envío, hay que volver a
+publicarlo o editarlo a mano en Firestore Console hasta que exista una
+pantalla de edición de productos.
 
 ### Retiro: el comprador nunca ve la dirección exacta hasta pagar
 
@@ -239,7 +255,13 @@ rompe.
 
 ## Modelo de datos actual
 
-- **`categorias/{slug}`** — `{ label, orden }`
+- **`categorias/{slug}`** — `{ label, orden }`. El menú público
+  (`Header`) usa `getCategoriasConProductos()`
+  (`lib/firestore.ts`) — solo muestra las que tienen al menos un
+  producto activo, para no llevar al comprador a una categoría vacía.
+  El formulario de publicar producto (`/vendedor/productos/nuevo`) usa
+  a propósito `getCategorias()` sin filtrar, para que se pueda cargar
+  el primer producto de una categoría todavía vacía.
 - **`productos/{id}`** — `{ titulo, precio, categoria, categoriaLabel,
   vendedor, vendedorId, stock, condicion, imagenColor, imagenes[], activo,
   creadoEn }`
@@ -408,15 +430,11 @@ Al publicar, también se elige el método de entrega — ver sección
    `productos/{id}` desde Firestore (Admin SDK) y use ese precio, no el
    que llega en el body — mismo tipo de validación que ya se hace con el
    método de envío.
-9. **Tarifa de envío centralizada por vendedor:** hoy cada vendedor tiene
-   que acordarse de poner el mismo `costoEnvio` en cada publicación con
-   envío — es manual y propenso a error. Lo más prolijo sería mover ese
-   campo a `vendedores/{uid}.costoEnvioAMBA` (un solo lugar) y que los
-   productos solo declaren si ofrecen envío o no, sin repetir el número.
-   No se hizo así en esta primera pasada para no tener que abrir la
-   colección `vendedores` a lectura pública (hoy es privada a propósito,
-   ver la sección de Facturación) — hay que decidir cómo exponer ese
-   único campo sin exponer el resto del perfil fiscal.
+9. **Editar/dar de baja productos:** el panel de vendedor solo lista y
+   crea. Falta poder editar precio/stock/condición o dar de baja
+   (`activo: false`) sin pasar por Firestore Console — importante también
+   para poder corregir productos publicados antes del cambio a envío
+   obligatorio (ver limitación en la sección de Envíos).
 10. **Ampliar zonas de envío más allá de AMBA:** cuando llegue el
     momento, sumar más valores a `ZonaEnvio` (`lib/ordenes.ts`) y al
     `<select>` del carrito — posiblemente con una tarifa distinta por

@@ -36,6 +36,7 @@ export default function RegistroVendedorPage() {
   const [barrioRetiro, setBarrioRetiro] = useState("");
   const [zonaRetiro, setZonaRetiro] = useState<ZonaAMBA>("CABA");
   const [codigoPostalRetiro, setCodigoPostalRetiro] = useState("");
+  const [costoEnvioAMBA, setCostoEnvioAMBA] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
@@ -65,6 +66,13 @@ export default function RegistroVendedorPage() {
       setError("Completá la dirección de retiro.");
       return;
     }
+    const costoEnvioNum = Number(costoEnvioAMBA);
+    if (costoEnvioAMBA === "" || isNaN(costoEnvioNum) || costoEnvioNum < 0) {
+      setError(
+        "Ingresá el costo de envío a AMBA (podés poner 0 si es gratis)."
+      );
+      return;
+    }
 
     setCargando(true);
     try {
@@ -87,6 +95,7 @@ export default function RegistroVendedorPage() {
               codigoPostal: codigoPostalRetiro,
             }
           : null,
+        costoEnvioAMBA: costoEnvioNum,
       });
       router.push("/vendedor");
     } catch (err) {
@@ -185,6 +194,27 @@ export default function RegistroVendedorPage() {
             </span>
           </label>
 
+          <div className="ficha bg-white border border-amber-dark/40 p-4">
+            <span className="text-sm font-medium block mb-2">
+              Envío a domicilio (AMBA)
+            </span>
+            <p className="text-xs text-charcoal/60 mb-3">
+              Todo lo que publiques en PAHÓ ofrece envío a domicilio dentro
+              de CABA y GBA — es obligatorio, no se puede desactivar por
+              producto. Definí acá tu tarifa fija: se cobra{" "}
+              <strong>una sola vez por pedido</strong>, sin importar
+              cuántos productos o unidades compre alguien.
+            </p>
+            <Campo
+              label="Costo de envío"
+              value={costoEnvioAMBA}
+              onChange={setCostoEnvioAMBA}
+              type="number"
+              required
+              hint="Poné 0 si querés ofrecer envío gratis"
+            />
+          </div>
+
           <div className="ficha bg-white border border-line p-4">
             <label className="flex items-center gap-2.5 text-sm font-medium">
               <input
@@ -195,6 +225,9 @@ export default function RegistroVendedorPage() {
               />
               Voy a ofrecer retiro en un local
             </label>
+            <p className="text-xs text-charcoal/50 mt-1">
+              Esto sí es opcional — además del envío obligatorio de arriba.
+            </p>
 
             {ofreceRetiro && (
               <div className="mt-4 space-y-3">

@@ -53,6 +53,13 @@ export type DatosVendedor = {
   aceptaDeclaracionCondicion: boolean;
   ofreceRetiro: boolean;
   direccionRetiro: DireccionRetiro | null;
+  /**
+   * Tarifa fija de envío a AMBA que se cobra una vez por pedido (no por
+   * producto). A diferencia del retiro (opcional), el envío a domicilio
+   * es obligatorio para todo vendedor — por eso este campo se pide acá,
+   * una sola vez, en vez de repetirlo en cada publicación.
+   */
+  costoEnvioAMBA: number;
 };
 
 /** Valida formato de CUIT: XX-XXXXXXXX-X (11 dígitos). No verifica contra AFIP. */
@@ -163,6 +170,7 @@ export async function registrarVendedor(datos: DatosVendedor) {
     aceptaDeclaracionCondicion: datos.aceptaDeclaracionCondicion,
     ofreceRetiro: datos.ofreceRetiro,
     direccionRetiro: datos.direccionRetiro,
+    costoEnvioAMBA: datos.costoEnvioAMBA,
     mpSellerId: null, // se completa en Fase 2, al conectar OAuth de Mercado Pago
     creadoEn: serverTimestamp(),
   });
