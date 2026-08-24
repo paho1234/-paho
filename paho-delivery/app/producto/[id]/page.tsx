@@ -27,29 +27,39 @@ export default async function ProductoPage({
 
       <section className="mx-auto max-w-5xl px-5 py-10 grid md:grid-cols-2 gap-10">
         <div
-          className="ficha aspect-square flex items-center justify-center border border-line relative overflow-hidden"
-          style={{ backgroundColor: `${producto.imagenColor}14` }}
+          className="relative aspect-square flex items-center justify-center p-10"
+          style={{ backgroundColor: `${producto.imagenColor}10` }}
         >
-          {producto.imagenes && producto.imagenes[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={producto.imagenes[0]}
-              alt={producto.titulo}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span
-              className="stamp w-16 h-16 text-lg bg-white"
-              style={{ color: producto.imagenColor, borderColor: producto.imagenColor }}
-            >
-              {producto.categoriaLabel.slice(0, 2).toUpperCase()}
-            </span>
-          )}
           {descuento && (
-            <span className="absolute top-4 right-4 bg-clay text-white text-sm font-bold font-mono px-3 py-1.5 rounded-sm">
+            <span className="absolute top-4 right-4 z-10 bg-clay text-white text-sm font-bold font-mono px-3 py-1.5 rounded-sm">
               -{descuento}% OFF
             </span>
           )}
+
+          <div className="relative w-full aspect-square rounded-full overflow-hidden border-4 border-white shadow-[0_4px_20px_rgba(27,42,61,0.15)] bg-white flex items-center justify-center">
+            {producto.imagenes && producto.imagenes[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={producto.imagenes[0]}
+                alt={producto.titulo}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span
+                className="font-display italic text-xl px-8 text-center leading-tight"
+                style={{ color: producto.imagenColor }}
+              >
+                {producto.titulo}
+              </span>
+            )}
+          </div>
+
+          <span
+            className="stamp absolute bottom-8 right-[8%] w-14 h-14 text-sm bg-white z-10"
+            style={{ color: producto.imagenColor, borderColor: producto.imagenColor }}
+          >
+            {producto.categoriaLabel.slice(0, 2).toUpperCase()}
+          </span>
         </div>
 
         <div>

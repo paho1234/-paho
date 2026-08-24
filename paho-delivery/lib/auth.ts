@@ -51,13 +51,15 @@ export type DatosVendedor = {
   password: string;
   documentoFacturacion?: File | null;
   aceptaDeclaracionCondicion: boolean;
-  ofreceRetiro: boolean;
-  direccionRetiro: DireccionRetiro | null;
+  /**
+   * Retiro y envío son AMBOS obligatorios para todo vendedor — no hay
+   * checkbox de "voy a ofrecer retiro". Todo el que se registra tiene
+   * que cargar su dirección de local.
+   */
+  direccionRetiro: DireccionRetiro;
   /**
    * Tarifa fija de envío a AMBA que se cobra una vez por pedido (no por
-   * producto). A diferencia del retiro (opcional), el envío a domicilio
-   * es obligatorio para todo vendedor — por eso este campo se pide acá,
-   * una sola vez, en vez de repetirlo en cada publicación.
+   * producto). Obligatoria, igual que el retiro.
    */
   costoEnvioAMBA: number;
 };
@@ -168,7 +170,7 @@ export async function registrarVendedor(datos: DatosVendedor) {
     documentoFacturacionUrl: documentoUrl,
     verificado: false, // pasa a true cuando alguien de PAHO valide los datos
     aceptaDeclaracionCondicion: datos.aceptaDeclaracionCondicion,
-    ofreceRetiro: datos.ofreceRetiro,
+    ofreceRetiro: true,
     direccionRetiro: datos.direccionRetiro,
     costoEnvioAMBA: datos.costoEnvioAMBA,
     mpSellerId: null, // se completa en Fase 2, al conectar OAuth de Mercado Pago

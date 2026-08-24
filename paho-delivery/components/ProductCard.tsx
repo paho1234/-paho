@@ -28,49 +28,56 @@ export default function ProductCard({ producto }: { producto: Producto }) {
   return (
     <Link
       href={`/producto/${producto.id}`}
-      className="ficha group block bg-white border border-line hover:border-ink/30 transition-colors"
+      className="group block bg-white border border-line rounded-stamp hover:border-ink/30 hover:shadow-md transition-all"
     >
+      {/* La foto redonda es el sello distintivo de PAHÓ — reemplaza la
+          típica miniatura cuadrada de un marketplace, y hace que el
+          catálogo se lea como una vidriera de "medallones" curados, no
+          como una grilla genérica de e-commerce. */}
       <div
-        className="relative aspect-square flex items-center justify-center overflow-hidden"
-        style={{ backgroundColor: `${producto.imagenColor}14` }}
+        className="relative aspect-square flex items-center justify-center p-6"
+        style={{ backgroundColor: `${producto.imagenColor}10` }}
       >
-        {producto.imagenes && producto.imagenes[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={producto.imagenes[0]}
-            alt={producto.titulo}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <span
-            className="font-display italic text-lg"
-            style={{ color: producto.imagenColor }}
-          >
-            {producto.titulo.split(" ").slice(0, 2).join(" ")}
+        {descuento && (
+          <span className="absolute top-3 right-3 z-10 bg-clay text-white text-xs font-bold font-mono px-2 py-1 rounded-sm">
+            -{descuento}%
+          </span>
+        )}
+        {producto.stock <= 10 && (
+          <span className="absolute top-3 left-3 z-10 text-[10px] font-mono uppercase tracking-wide text-clay bg-white/90 px-2 py-0.5 rounded-sm">
+            Últimas {producto.stock}
           </span>
         )}
 
+        <div className="relative w-[80%] aspect-square rounded-full overflow-hidden border-4 border-white shadow-[0_2px_10px_rgba(27,42,61,0.12)] bg-white flex items-center justify-center">
+          {producto.imagenes && producto.imagenes[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={producto.imagenes[0]}
+              alt={producto.titulo}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span
+              className="font-display italic text-base px-3 text-center leading-tight"
+              style={{ color: producto.imagenColor }}
+            >
+              {producto.titulo.split(" ").slice(0, 2).join(" ")}
+            </span>
+          )}
+        </div>
+
+        {/* El sello de categoría queda apoyado sobre el borde inferior
+            del círculo, como un sello de cera sobre un medallón. */}
         <span
-          className="stamp absolute top-3 left-3 w-9 h-9 text-[11px] bg-white"
+          className="stamp absolute bottom-4 right-[14%] w-8 h-8 text-[10px] bg-white z-10"
           style={{ color: producto.imagenColor, borderColor: producto.imagenColor }}
         >
           {inicial}
         </span>
-
-        {descuento && (
-          <span className="absolute top-3 right-3 bg-clay text-white text-xs font-bold font-mono px-2 py-1 rounded-sm">
-            -{descuento}%
-          </span>
-        )}
-
-        {producto.stock <= 10 && (
-          <span className="absolute bottom-3 right-3 text-[10px] font-mono uppercase tracking-wide text-clay bg-white/90 px-2 py-0.5 rounded-sm">
-            Últimas {producto.stock}
-          </span>
-        )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 pt-3">
         <p className="text-[11px] font-mono uppercase tracking-wide text-charcoal/50 mb-1">
           {producto.vendedor}
         </p>

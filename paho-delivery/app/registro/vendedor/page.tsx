@@ -30,7 +30,6 @@ export default function RegistroVendedorPage() {
   const [password, setPassword] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [aceptaDeclaracion, setAceptaDeclaracion] = useState(false);
-  const [ofreceRetiro, setOfreceRetiro] = useState(false);
   const [calleRetiro, setCalleRetiro] = useState("");
   const [numeroRetiro, setNumeroRetiro] = useState("");
   const [barrioRetiro, setBarrioRetiro] = useState("");
@@ -57,13 +56,12 @@ export default function RegistroVendedorPage() {
       return;
     }
     if (
-      ofreceRetiro &&
-      (!calleRetiro.trim() ||
-        !numeroRetiro.trim() ||
-        !barrioRetiro.trim() ||
-        !codigoPostalRetiro.trim())
+      !calleRetiro.trim() ||
+      !numeroRetiro.trim() ||
+      !barrioRetiro.trim() ||
+      !codigoPostalRetiro.trim()
     ) {
-      setError("Completá la dirección de retiro.");
+      setError("Completá la dirección de tu local (para retiro).");
       return;
     }
     const costoEnvioNum = Number(costoEnvioAMBA);
@@ -85,16 +83,13 @@ export default function RegistroVendedorPage() {
         password,
         documentoFacturacion: archivo,
         aceptaDeclaracionCondicion: aceptaDeclaracion,
-        ofreceRetiro,
-        direccionRetiro: ofreceRetiro
-          ? {
-              calle: calleRetiro,
-              numero: numeroRetiro,
-              barrio: barrioRetiro,
-              zona: zonaRetiro,
-              codigoPostal: codigoPostalRetiro,
-            }
-          : null,
+        direccionRetiro: {
+          calle: calleRetiro,
+          numero: numeroRetiro,
+          barrio: barrioRetiro,
+          zona: zonaRetiro,
+          codigoPostal: codigoPostalRetiro,
+        },
         costoEnvioAMBA: costoEnvioNum,
       });
       router.push("/vendedor");
@@ -199,9 +194,10 @@ export default function RegistroVendedorPage() {
               Envío a domicilio (AMBA)
             </span>
             <p className="text-xs text-charcoal/60 mb-3">
-              Todo lo que publiques en PAHÓ ofrece envío a domicilio dentro
-              de CABA y GBA — es obligatorio, no se puede desactivar por
-              producto. Definí acá tu tarifa fija: se cobra{" "}
+              Todo lo que publiques en PAHÓ ofrece retiro en tu local Y
+              envío a domicilio dentro de CABA y GBA — las dos opciones son
+              obligatorias, no se pueden desactivar por producto. Definí
+              acá tu tarifa fija de envío: se cobra{" "}
               <strong>una sola vez por pedido</strong>, sin importar
               cuántos productos o unidades compre alguien.
             </p>
@@ -216,74 +212,66 @@ export default function RegistroVendedorPage() {
           </div>
 
           <div className="ficha bg-white border border-line p-4">
-            <label className="flex items-center gap-2.5 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={ofreceRetiro}
-                onChange={(e) => setOfreceRetiro(e.target.checked)}
-                className="accent-ink"
-              />
-              Voy a ofrecer retiro en un local
-            </label>
-            <p className="text-xs text-charcoal/50 mt-1">
-              Esto sí es opcional — además del envío obligatorio de arriba.
+            <span className="text-sm font-medium block mb-2">
+              Dirección de tu local (retiro)
+            </span>
+            <p className="text-xs text-charcoal/50 bg-amber/10 border border-amber-dark/20 rounded-stamp px-3 py-2 mb-3">
+              Esta dirección es privada — solo la ve un comprador puntual
+              después de iniciar el pago de un pedido tuyo. En tus
+              publicaciones, los compradores solo van a ver el barrio
+              (ej: &quot;Retiro en Belgrano, CABA&quot;), nunca la calle ni
+              el número.
             </p>
-
-            {ofreceRetiro && (
-              <div className="mt-4 space-y-3">
-                <p className="text-xs text-charcoal/50 bg-amber/10 border border-amber-dark/20 rounded-stamp px-3 py-2">
-                  Esta dirección es privada — solo la ve un comprador
-                  puntual después de iniciar el pago de un pedido tuyo. En
-                  tus publicaciones, los compradores solo van a ver el
-                  barrio (ej: &quot;Retiro en Belgrano, CABA&quot;), nunca la
-                  calle ni el número.
-                </p>
-                <div className="grid grid-cols-[1fr_100px] gap-3">
-                  <Campo
-                    label="Calle"
-                    value={calleRetiro}
-                    onChange={setCalleRetiro}
-                    type="text"
-                  />
-                  <Campo
-                    label="Número"
-                    value={numeroRetiro}
-                    onChange={setNumeroRetiro}
-                    type="text"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Campo
-                    label="Barrio"
-                    value={barrioRetiro}
-                    onChange={setBarrioRetiro}
-                    type="text"
-                    hint="Esto sí es público"
-                  />
-                  <label className="block">
-                    <span className="text-sm font-medium block mb-1">
-                      Zona
-                    </span>
-                    <select
-                      value={zonaRetiro}
-                      onChange={(e) =>
-                        setZonaRetiro(e.target.value as ZonaAMBA)
-                      }
-                      className="w-full border border-line rounded-stamp px-3 py-2 text-sm outline-none focus:border-ink transition-colors bg-white"
-                    >
-                      <option value="CABA">CABA</option>
-                      <option value="GBA">GBA (provincia de Buenos Aires)</option>
-                    </select>
-                  </label>
-                </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-[1fr_100px] gap-3">
                 <Campo
-                  label="Código postal"
-                  value={codigoPostalRetiro}
-                  onChange={setCodigoPostalRetiro}
+                  label="Calle"
+                  value={calleRetiro}
+                  onChange={setCalleRetiro}
                   type="text"
+                  required
+                />
+                <Campo
+                  label="Número"
+                  value={numeroRetiro}
+                  onChange={setNumeroRetiro}
+                  type="text"
+                  required
                 />
               </div>
-            )}
+              <div className="grid grid-cols-2 gap-3">
+                <Campo
+                  label="Barrio"
+                  value={barrioRetiro}
+                  onChange={setBarrioRetiro}
+                  type="text"
+                  required
+                  hint="Esto sí es público"
+                />
+                <label className="block">
+                  <span className="text-sm font-medium block mb-1">
+                    Zona
+                  </span>
+                  <select
+                    value={zonaRetiro}
+                    onChange={(e) =>
+                      setZonaRetiro(e.target.value as ZonaAMBA)
+                    }
+                    className="w-full border border-line rounded-stamp px-3 py-2 text-sm outline-none focus:border-ink transition-colors bg-white"
+                  >
+                    <option value="CABA">CABA</option>
+                    <option value="GBA">GBA (provincia de Buenos Aires)</option>
+                  </select>
+                </label>
+              </div>
+              <Campo
+                label="Código postal"
+                value={codigoPostalRetiro}
+                onChange={setCodigoPostalRetiro}
+                type="text"
+                required
+              />
+            </div>
           </div>
 
           <label className="flex items-start gap-2.5 text-sm">

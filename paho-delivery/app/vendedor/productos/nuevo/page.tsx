@@ -29,10 +29,9 @@ const condiciones = Object.entries(condicionLabel) as [
 ][];
 
 type PerfilRetiro = {
-  ofreceRetiro: boolean;
   barrio: string;
   zona: string;
-};
+} | null;
 
 export default function NuevoProductoPage() {
   const { user, rol, cargando: cargandoAuth } = useAuth();
@@ -57,9 +56,17 @@ export default function NuevoProductoPage() {
   const [precio, setPrecio] = useState("");
   const [precioOriginal, setPrecioOriginal] = useState("");
   const [stock, setStock] = useState("1");
-  const [retiro, setRetiro] = useState(true);
-  const [perfilRetiro, setPerfilRetiro] = useState<PerfilRetiro | null>(null);
+  // Retiro y envío son AMBOS obligatorios para todo producto. Igual que
+  // con el costo de envío: si el perfil ya tiene la dirección de retiro,
+  // se usa esa; si no (cuenta vieja), se pide acá una sola vez y se
+  // guarda de vuelta en el perfil.
+  const [perfilRetiro, setPerfilRetiro] = useState<PerfilRetiro>(null);
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
+  const [calleRetiroManual, setCalleRetiroManual] = useState("");
+  const [numeroRetiroManual, setNumeroRetiroManual] = useState("");
+  const [barrioRetiroManual, setBarrioRetiroManual] = useState("");
+  const [zonaRetiroManual, setZonaRetiroManual] = useState<"CABA" | "GBA">("CABA");
+  const [codigoPostalRetiroManual, setCodigoPostalRetiroManual] = useState("");
   // Costo de envío del vendedor (siempre obligatorio para todo producto).
   // Se trae del perfil; si una cuenta se registró antes de que este
   // campo existiera, queda null y se le pide acá — una sola vez, se
@@ -80,15 +87,11 @@ export default function NuevoProductoPage() {
       .then((snap) => {
         if (snap.exists()) {
           const data = snap.data();
-          if (data.ofreceRetiro && data.direccionRetiro) {
+          if (data.direccionRetiro) {
             setPerfilRetiro({
-              ofreceRetiro: true,
               barrio: data.direccionRetiro.barrio,
               zona: data.direccionRetiro.zona,
             });
-          } else {
-            setPerfilRetiro({ ofreceRetiro: false, barrio: "", zona: "" });
-            setRetiro(false);
           }
           if (typeof data.costoEnvioAMBA === "number") {
             setCostoEnvioPerfil(data.costoEnvioAMBA);
@@ -164,6 +167,38 @@ export default function NuevoProductoPage() {
       );
     if (!stockNum || stockNum <= 0) return setError("Stock inválido.");
 
+    // Retiro obligatorio: si el perfil ya tiene dirección, se usa esa.
+    // Si no (cuenta vieja), se toma lo que cargó a mano acá y se guarda
+    // en el perfil para no volver a pedirlo.
+    let barrioRetiro: string;
+    let direccionRetiroParaGuardar: {
+      calle: string;
+      numero: string;
+      barrio: string;
+      zona: "CABA" | "GBA";
+      codigoPostal: string;
+    } | null = null;
+    if (perfilRetiro) {
+      barrioRetiro = `${perfilRetiro.barrio}, ${perfilRetiro.zona}`;
+    } else {
+      if (
+        !calleRetiroManual.trim() ||
+        !numeroRetiroManual.trim() ||
+        !barrioRetiroManual.trim() ||
+        !codigoPostalRetiroManual.trim()
+      ) {
+        return setError("Completá la dirección de tu local (para retiro).");
+      }
+      barrioRetiro = `${barrioRetiroManual}, ${zonaRetiroManual}`;
+      direccionRetiroParaGuardar = {
+        calle: calleRetiroManual,
+        numero: numeroRetiroManual,
+        barrio: barrioRetiroManual,
+        zona: zonaRetiroManual,
+        codigoPostal: codigoPostalRetiroManual,
+      };
+    }
+
     // El envío es obligatorio para todo producto. Si el perfil ya tiene
     // costoEnvioAMBA, se usa ese. Si no (cuenta vieja), se toma el valor
     // que cargó a mano en este mismo formulario, y de paso se guarda en
@@ -183,12 +218,18 @@ export default function NuevoProductoPage() {
 
     setPublicando(true);
     try {
+      const actualizacionesPerfil: Record<string, unknown> = {};
       if (costoEnvioPerfil === null) {
-        await setDoc(
-          doc(db, "vendedores", user.uid),
-          { costoEnvioAMBA: costoEnvio },
-          { merge: true }
-        );
+        actualizacionesPerfil.costoEnvioAMBA = costoEnvio;
+      }
+      if (direccionRetiroParaGuardar) {
+        actualizacionesPerfil.direccionRetiro = direccionRetiroParaGuardar;
+        actualizacionesPerfil.ofreceRetiro = true;
+      }
+      if (Object.keys(actualizacionesPerfil).length > 0) {
+        await setDoc(doc(db, "vendedores", user.uid), actualizacionesPerfil, {
+          merge: true,
+        });
       }
 
       const perfilSnap = await getDoc(doc(db, "vendedores", user.uid));
@@ -211,13 +252,10 @@ export default function NuevoProductoPage() {
         vendedor: nombreVendedor,
         imagen,
         envio: {
-          retiro,
+          retiro: true,
           envioDomicilio: true,
           costoEnvio,
-          barrioRetiro:
-            retiro && perfilRetiro?.ofreceRetiro
-              ? `${perfilRetiro.barrio}, ${perfilRetiro.zona}`
-              : null,
+          barrioRetiro,
         },
       });
 
@@ -400,40 +438,82 @@ export default function NuevoProductoPage() {
 
           <div className="ficha bg-white border border-line p-4">
             <span className="text-sm font-medium block mb-3">
-              Entrega
+              Entrega — ambas opciones son obligatorias
             </span>
             <div className="space-y-3">
-              <label
-                className={`flex items-center gap-2.5 text-sm ${
-                  !cargandoPerfil && perfilRetiro && !perfilRetiro.ofreceRetiro
-                    ? "opacity-50"
-                    : ""
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={retiro}
-                  disabled={
-                    !cargandoPerfil &&
-                    !!perfilRetiro &&
-                    !perfilRetiro.ofreceRetiro
-                  }
-                  onChange={(e) => setRetiro(e.target.checked)}
-                  className="accent-ink"
-                />
-                Retiro en el local del vendedor
-                {perfilRetiro?.ofreceRetiro && (
-                  <span className="text-xs text-charcoal/50">
-                    ({perfilRetiro.barrio}, {perfilRetiro.zona})
-                  </span>
-                )}
-              </label>
-              {!cargandoPerfil && perfilRetiro && !perfilRetiro.ofreceRetiro && (
-                <p className="text-xs text-charcoal/50 pl-6 -mt-2">
-                  Todavía no cargaste una dirección de retiro en tu
-                  registro. Contactanos para agregarla.
+              <div>
+                <p className="text-sm flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-moss" />
+                  Retiro en tu local — siempre incluido
                 </p>
-              )}
+                {cargandoPerfil ? (
+                  <p className="text-xs text-charcoal/50 pl-3.5 mt-1">
+                    Cargando tu dirección…
+                  </p>
+                ) : perfilRetiro ? (
+                  <p className="text-xs text-charcoal/50 pl-3.5 mt-1">
+                    {perfilRetiro.barrio}, {perfilRetiro.zona}{" "}
+                    <span className="text-charcoal/40">
+                      (definida en tu registro)
+                    </span>
+                  </p>
+                ) : (
+                  <div className="pl-3.5 mt-2 space-y-3">
+                    <p className="text-xs text-charcoal/50">
+                      Tu cuenta no tiene esto configurado todavía. Se
+                      guarda en tu perfil para no volver a pedirlo.
+                    </p>
+                    <div className="grid grid-cols-[1fr_100px] gap-3">
+                      <Campo
+                        label="Calle"
+                        value={calleRetiroManual}
+                        onChange={setCalleRetiroManual}
+                        type="text"
+                      />
+                      <Campo
+                        label="Número"
+                        value={numeroRetiroManual}
+                        onChange={setNumeroRetiroManual}
+                        type="text"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Campo
+                        label="Barrio"
+                        value={barrioRetiroManual}
+                        onChange={setBarrioRetiroManual}
+                        type="text"
+                        hint="Esto sí es público"
+                      />
+                      <label className="block">
+                        <span className="text-sm font-medium block mb-1">
+                          Zona
+                        </span>
+                        <select
+                          value={zonaRetiroManual}
+                          onChange={(e) =>
+                            setZonaRetiroManual(
+                              e.target.value as "CABA" | "GBA"
+                            )
+                          }
+                          className="w-full border border-line rounded-stamp px-3 py-2 text-sm outline-none focus:border-ink bg-white"
+                        >
+                          <option value="CABA">CABA</option>
+                          <option value="GBA">
+                            GBA (provincia de Buenos Aires)
+                          </option>
+                        </select>
+                      </label>
+                    </div>
+                    <Campo
+                      label="Código postal"
+                      value={codigoPostalRetiroManual}
+                      onChange={setCodigoPostalRetiroManual}
+                      type="text"
+                    />
+                  </div>
+                )}
+              </div>
 
               <div className="pt-2 border-t border-line">
                 <p className="text-sm flex items-center gap-2">

@@ -20,19 +20,15 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-ink text-paper">
+    <header className="sticky top-0 z-30 bg-paper border-b border-line">
       <div className="mx-auto max-w-6xl px-5">
-        <div className="flex items-center gap-6 py-4">
-          <Link href="/" className="flex items-baseline gap-1 shrink-0">
-            <span className="font-display font-black text-3xl tracking-tight">
-              PAHÓ
-            </span>
-            <span className="stamp text-[10px] px-1.5 py-0.5 text-amber border-amber">
-              OUTLET
-            </span>
+        <div className="flex items-center gap-6 py-3">
+          <Link href="/" className="shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-header.png" alt="PAHÓ Outlet" className="h-11 w-auto" />
           </Link>
 
-          <div className="hidden md:flex flex-1 items-center bg-paper rounded-stamp px-3 py-2 text-charcoal">
+          <div className="hidden md:flex flex-1 items-center bg-white border border-line rounded-stamp px-3 py-2 text-charcoal">
             <Search size={16} className="text-charcoal/50 shrink-0" />
             <input
               type="text"
@@ -43,13 +39,13 @@ export default function Header() {
 
           <div className="flex items-center gap-5 shrink-0">
             {!cargando && !user && (
-              <div className="hidden sm:flex items-center gap-4 text-sm">
-                <Link href="/login" className="hover:text-amber transition-colors">
+              <div className="hidden sm:flex items-center gap-4 text-sm text-charcoal/80">
+                <Link href="/login" className="hover:text-amber-dark transition-colors">
                   Ingresar
                 </Link>
                 <Link
                   href="/registro"
-                  className="hover:text-amber transition-colors"
+                  className="hover:text-amber-dark transition-colors"
                 >
                   Registrarme
                 </Link>
@@ -57,22 +53,22 @@ export default function Header() {
             )}
 
             {!cargando && user && (
-              <div className="hidden sm:flex items-center gap-3 text-sm">
+              <div className="hidden sm:flex items-center gap-3 text-sm text-charcoal/80">
                 {rol === "vendedor" && (
                   <Link
                     href="/vendedor"
-                    className="hover:text-amber transition-colors"
+                    className="hover:text-amber-dark transition-colors"
                   >
                     Mi panel
                   </Link>
                 )}
-                <span className="flex items-center gap-1.5 text-paper/80">
+                <span className="flex items-center gap-1.5 text-charcoal/70">
                   <User size={15} />
                   {user.displayName ?? user.email}
                 </span>
                 <button
                   onClick={() => cerrarSesion()}
-                  className="hover:text-amber transition-colors"
+                  className="hover:text-amber-dark transition-colors"
                 >
                   Salir
                 </button>
@@ -81,7 +77,7 @@ export default function Header() {
 
             <Link
               href="/carrito"
-              className="relative flex items-center gap-2 hover:text-amber transition-colors"
+              className="relative flex items-center gap-2 text-ink hover:text-amber-dark transition-colors"
             >
               <ShoppingBag size={22} />
               {cantidad > 0 && (
@@ -101,7 +97,7 @@ export default function Header() {
             <Link
               key={c.slug}
               href={`/?categoria=${c.slug}`}
-              className="whitespace-nowrap text-paper/75 hover:text-amber transition-colors"
+              className="whitespace-nowrap text-charcoal/60 hover:text-amber-dark transition-colors"
             >
               {c.label}
             </Link>

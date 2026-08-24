@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
+import ZonaCobertura from "@/components/ZonaCobertura";
 import { getProductos, getCategorias } from "@/lib/firestore";
 
 // El catálogo se lee de Firestore en cada request — no tiene sentido
@@ -24,17 +25,24 @@ export default async function Home({
   return (
     <main className="min-h-screen bg-paper-texture">
       <Header />
+      <ZonaCobertura />
 
       <section className="border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
-          <span className="stamp text-xs px-2 py-1 text-clay border-clay mb-5">
-            OUTLET DE DEVOLUCIONES
-          </span>
-          <h1 className="font-display text-4xl md:text-6xl font-semibold leading-[1.05] max-w-2xl">
-            Productos como nuevos,{" "}
-            <span className="italic text-amber-dark">a precio de devolución.</span>
+        <div className="mx-auto max-w-6xl px-5 py-14 md:py-20 flex flex-col items-center text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="PAHÓ Outlet — Productos como nuevos, a precio de devolución"
+            className="w-full max-w-md md:max-w-lg mb-2"
+          />
+          {/* Título real para SEO/accesibilidad — el logo de arriba ya
+              transmite el mismo mensaje visualmente, así que este queda
+              oculto en pantalla pero lo siguen leyendo buscadores y
+              lectores de pantalla. */}
+          <h1 className="sr-only">
+            PAHÓ Outlet — Productos como nuevos, a precio de devolución.
           </h1>
-          <p className="mt-5 max-w-lg text-charcoal/70 text-base md:text-lg">
+          <p className="mt-3 max-w-lg text-charcoal/70 text-base md:text-lg">
             Devoluciones, reacondicionados y liquidaciones de marcas reales,
             hasta 70% menos. Cada producto con su condición declarada, sin
             sorpresas.
