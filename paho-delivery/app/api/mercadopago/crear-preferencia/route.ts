@@ -219,6 +219,16 @@ export async function POST(req: NextRequest) {
 
     const ordenRef = await db.collection("ordenes").add(orden);
 
+    // Diagnóstico temporal: confirma qué está leyendo realmente esta
+    // función en producción, sin exponer el token completo en los logs.
+    const tokenActual = process.env.MP_ACCESS_TOKEN;
+    console.log(
+      "MP_ACCESS_TOKEN detectado:",
+      tokenActual
+        ? `${tokenActual.slice(0, 15)}... (${tokenActual.length} caracteres)`
+        : "NO DEFINIDO (undefined/vacío)"
+    );
+
     const client = new MercadoPagoConfig({
       accessToken: process.env.MP_ACCESS_TOKEN as string,
     });
