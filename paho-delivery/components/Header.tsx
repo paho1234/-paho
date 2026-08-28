@@ -13,6 +13,19 @@ export default function Header() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const { user, rol, cargando } = useAuth();
 
+  // FIX (error de hidratación #425): el carrito (Zustand + persist)
+  // se recupera de localStorage del lado del cliente, pero el servidor
+  // siempre renderiza con el carrito vacío. Si mostramos `cantidad`
+  // directo, el primer render del cliente puede no coincidir con el
+  // HTML que mandó el servidor. `mounted` arranca en false tanto en
+  // servidor como en cliente (primer render idéntico) y recién pasa a
+  // true después de montar, así el badge real aparece un instante
+  // después sin generar mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     getCategoriasConProductos()
       .then(setCategorias)
@@ -80,7 +93,7 @@ export default function Header() {
               className="relative flex items-center gap-2 text-ink hover:text-amber-dark transition-colors"
             >
               <ShoppingBag size={22} />
-              {cantidad > 0 && (
+              {mounted && cantidad > 0 && (
                 <span className="absolute -top-2 -right-2 bg-amber text-ink text-[11px] font-mono font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cantidad}
                 </span>
