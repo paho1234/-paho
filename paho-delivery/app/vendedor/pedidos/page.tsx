@@ -119,13 +119,13 @@ export default function PedidosPage() {
                         : "Fecha no disponible"}
                     </p>
                     <p className="text-sm font-medium">
-                      {p.facturacion.nombre}
+                      {p.facturacion?.nombre ?? "(sin nombre)"}
                     </p>
                     <p className="text-xs text-charcoal/60 mt-0.5">
-                      {p.items.map((i) => `${i.titulo} ×${i.cantidad}`).join(", ")}
+                      {(p.items ?? []).map((i) => `${i.titulo} ×${i.cantidad}`).join(", ")}
                     </p>
                     <p className="text-xs text-charcoal/50 mt-1">
-                      {p.envio.metodo === "domicilio"
+                      {p.envio?.metodo === "domicilio"
                         ? "Envío a domicilio"
                         : "Retiro en el local"}
                     </p>
@@ -163,7 +163,7 @@ export default function PedidosPage() {
                     <Truck size={13} />
                     {confirmando === p.id
                       ? "Confirmando…"
-                      : p.envio.metodo === "domicilio"
+                      : p.envio?.metodo === "domicilio"
                         ? "Marcar como despachado"
                         : "Marcar como entregado"}
                   </button>

@@ -22,9 +22,28 @@ function docToPedido(id: string, data: DocumentData): PedidoVendedor {
     id,
     compradorId: data.compradorId,
     items: data.items ?? [],
-    total: data.total,
-    facturacion: data.facturacion,
-    envio: data.envio,
+    total: data.total ?? 0,
+    // FIX: mismo motivo que `envio` abajo — un documento viejo/incompleto
+    // sin `facturacion` rompía la UI en `p.facturacion.nombre`.
+    facturacion: data.facturacion ?? {
+      nombre: "(sin nombre)",
+      tipoDocumento: "DNI",
+      numeroDocumento: "-",
+      condicionIVA: "consumidor_final",
+    },
+    // FIX: pedidos guardados antes de que `envio` existiera en el
+    // modelo de datos (o cualquier documento incompleto) no tienen este
+    // campo. Sin el respaldo, `p.envio.metodo` en la UI explota con
+    // "Cannot read properties of undefined". Como salvaguarda,
+    // asumimos "retiro" (la opción más simple / sin costo) para no
+    // inventar una dirección de envío que no existe.
+    envio: data.envio ?? {
+      metodo: "retiro",
+      costo: 0,
+      direccion: null,
+      telefonoContacto: null,
+      direccionRetiro: null,
+    },
     estado: data.estado,
     entrega: data.entrega ?? "pendiente",
     entregaConfirmadaEn: data.entregaConfirmadaEn?.toDate
