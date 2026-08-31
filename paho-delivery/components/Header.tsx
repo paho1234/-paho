@@ -11,7 +11,7 @@ import { cerrarSesion } from "@/lib/auth";
 export default function Header() {
   const cantidad = useCartStore((s) => s.cantidadTotal());
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const { user, rol, cargando } = useAuth();
+  const { user, rol, esAdmin, cargando } = useAuth();
 
   // FIX (error de hidratación #425): el carrito (Zustand + persist)
   // se recupera de localStorage del lado del cliente, pero el servidor
@@ -83,7 +83,7 @@ export default function Header() {
                     Mis compras
                   </Link>
                 )}
-                {rol === "admin" && (
+                {esAdmin && (
                   <Link
                     href="/admin"
                     className="hover:text-amber-dark transition-colors"

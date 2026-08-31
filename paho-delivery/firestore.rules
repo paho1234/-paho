@@ -3,12 +3,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Admin: cuenta con rol "admin" en su perfil (usuarios/{uid}.rol).
-    // Ese rol NO se puede autoasignar por registro público — solo se
-    // carga a mano en la consola de Firebase, sobre una cuenta puntual.
+    // Admin: cuenta con el campo `esAdmin: true` en su perfil
+    // (usuarios/{uid}.esAdmin) — un permiso APARTE de `rol`, así una
+    // cuenta puede seguir operando como vendedor y además tener acceso
+    // al panel admin. Ese campo NO se puede autoasignar por registro
+    // público — solo se carga a mano en la consola de Firebase.
     function esAdmin() {
       return request.auth != null &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.esAdmin == true;
     }
 
     // Catálogo público: cualquiera puede leer productos y categorías.

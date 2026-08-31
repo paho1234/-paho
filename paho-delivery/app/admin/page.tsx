@@ -31,7 +31,7 @@ const estadoVentaColor: Record<VentaAdmin["estado"], string> = {
 };
 
 export default function AdminPage() {
-  const { user, rol, cargando } = useAuth();
+  const { user, esAdmin, cargando } = useAuth();
   const router = useRouter();
 
   const [bannerTexto, setBannerTextoLocal] = useState("");
@@ -54,13 +54,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (cargando) return;
-    if (!user || rol !== "admin") {
+    if (!user || !esAdmin) {
       router.push("/");
     }
-  }, [user, rol, cargando, router]);
+  }, [user, esAdmin, cargando, router]);
 
   useEffect(() => {
-    if (!user || rol !== "admin") return;
+    if (!user || !esAdmin) return;
     getBannerTexto()
       .then(setBannerTextoLocal)
       .finally(() => setBannerCargando(false));
@@ -76,7 +76,7 @@ export default function AdminPage() {
       .then(setVendedores)
       .catch(() => setError("No pudimos cargar los vendedores."))
       .finally(() => setVendedoresCargando(false));
-  }, [user, rol]);
+  }, [user, esAdmin]);
 
   // Nombre de vendedor a partir de su id, para mostrar en la lista de
   // ventas (la orden solo guarda vendedorId, no el nombre de fantasía).
@@ -132,7 +132,7 @@ export default function AdminPage() {
     }
   }
 
-  if (cargando || !user || rol !== "admin") {
+  if (cargando || !user || !esAdmin) {
     return (
       <main className="min-h-screen bg-paper-texture">
         <Header />

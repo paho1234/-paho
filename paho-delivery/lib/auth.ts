@@ -14,7 +14,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirebaseAuth, getFirebaseStorage, db } from "@/lib/firebase";
 
-export type Rol = "comprador" | "vendedor" | "admin";
+export type Rol = "comprador" | "vendedor";
 
 export type CondicionIVA =
   | "responsable_inscripto"

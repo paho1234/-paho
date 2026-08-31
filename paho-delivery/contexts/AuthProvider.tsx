@@ -15,12 +15,14 @@ import type { Rol } from "@/lib/auth";
 type AuthState = {
   user: User | null;
   rol: Rol | null;
+  esAdmin: boolean;
   cargando: boolean;
 };
 
 const AuthContext = createContext<AuthState>({
   user: null,
   rol: null,
+  esAdmin: false,
   cargando: true,
 });
 
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
     rol: null,
+    esAdmin: false,
     cargando: true,
   });
 
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!user) {
-        setState({ user: null, rol: null, cargando: false });
+        setState({ user: null, rol: null, esAdmin: false, cargando: false });
         return;
       }
 
@@ -52,13 +55,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // instante en que Firebase Auth ya nos dio la sesión — con
       // onSnapshot, en cuanto ese documento se crea (un instante
       // después), el rol se actualiza solo, sin condición de carrera.
+      //
+      // `esAdmin` es un permiso APARTE de `rol` (comprador/vendedor):
+      // así una cuenta puede seguir operando como vendedor y tener,
+      // además, acceso al panel admin — no son excluyentes.
       unsubPerfil = onSnapshot(
         doc(db, "usuarios", user.uid),
         (snap) => {
           const rol = snap.exists() ? (snap.data().rol as Rol) : null;
-          setState({ user, rol, cargando: false });
+          const esAdmin = snap.exists() ? snap.data().esAdmin === true : false;
+          setState({ user, rol, esAdmin, cargando: false });
         },
-        () => setState({ user, rol: null, cargando: false })
+        () => setState({ user, rol: null, esAdmin: false, cargando: false })
       );
     });
 

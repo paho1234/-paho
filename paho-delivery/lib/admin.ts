@@ -52,7 +52,7 @@ export async function getTodosLosProductosAdmin(): Promise<Producto[]> {
 /**
  * Borra un producto sin importar quién sea su vendedor. Las reglas de
  * Firestore (ver firestore.rules) son las que realmente autorizan esto
- * — solo lo permiten si quien llama tiene rol "admin" en su perfil.
+ * — solo lo permiten si quien llama tiene `esAdmin: true` en su perfil.
  * Esta función no revisa el rol por su cuenta: si el usuario no es
  * admin, Firestore va a rechazar el borrado igual.
  */
