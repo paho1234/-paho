@@ -106,10 +106,12 @@ export function descuentoPorcentaje(p: Producto): number | null {
 }
 
 /**
- * Trae todos los productos activos, opcionalmente filtrados por categoría.
- * Requiere un índice compuesto (activo + categoria + fecha) si se agrega
- * orderBy con filtro — Firestore te va a tirar el link para crearlo en la
- * consola la primera vez que corra la query.
+ * Trae todos los productos activos y CON STOCK, opcionalmente filtrados
+ * por categoría. El filtro de stock se hace en el cliente (no con un
+ * `where("stock", ">", 0)` en Firestore) porque combinar un filtro de
+ * rango con el orden por fecha (creadoEn) obligaría a ordenar por stock
+ * en vez de por fecha — una limitación de Firestore. Con el volumen de
+ * productos de PAHO esto es liviano y evita ese problema.
  */
 export async function getProductos(categoria?: string): Promise<Producto[]> {
   const ref = collection(db, "productos");
@@ -118,7 +120,9 @@ export async function getProductos(categoria?: string): Promise<Producto[]> {
 
   const q = query(ref, ...filtros, orderBy("creadoEn", "desc"));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => docToProducto(d.id, d.data()));
+  return snap.docs
+    .map((d) => docToProducto(d.id, d.data()))
+    .filter((p) => p.stock > 0);
 }
 
 export async function getProducto(id: string): Promise<Producto | null> {

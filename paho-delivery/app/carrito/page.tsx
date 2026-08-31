@@ -139,8 +139,14 @@ export default function CarritoPage() {
                     onClick={() =>
                       actualizarCantidad(item.id, item.cantidad + 1)
                     }
-                    className="p-1 hover:text-moss"
+                    disabled={item.cantidad >= item.stock}
+                    className="p-1 hover:text-moss disabled:opacity-30 disabled:hover:text-inherit disabled:cursor-not-allowed"
                     aria-label="Sumar"
+                    title={
+                      item.cantidad >= item.stock
+                        ? "No hay más stock disponible"
+                        : undefined
+                    }
                   >
                     <Plus size={14} />
                   </button>

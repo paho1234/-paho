@@ -75,6 +75,22 @@ export default function Header() {
                     Mi panel
                   </Link>
                 )}
+                {rol === "comprador" && (
+                  <Link
+                    href="/mis-compras"
+                    className="hover:text-amber-dark transition-colors"
+                  >
+                    Mis compras
+                  </Link>
+                )}
+                {rol === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="hover:text-amber-dark transition-colors"
+                  >
+                    Panel admin
+                  </Link>
+                )}
                 <span className="flex items-center gap-1.5 text-charcoal/70">
                   <User size={15} />
                   {user.displayName ?? user.email}

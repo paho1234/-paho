@@ -3,16 +3,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Admin: cuenta con rol "admin" en su perfil (usuarios/{uid}.rol).
+    // Ese rol NO se puede autoasignar por registro público — solo se
+    // carga a mano en la consola de Firebase, sobre una cuenta puntual.
+    function esAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
     // Catálogo público: cualquiera puede leer productos y categorías.
     // Cada vendedor solo puede crear/editar/borrar SUS propios productos
-    // (valida vendedorId == su uid). Las categorías las administra PAHO
-    // (Admin SDK / consola), no los vendedores.
+    // (valida vendedorId == su uid). El admin puede borrar CUALQUIER
+    // publicación (moderación), pero no editar/crear a nombre de otro
+    // vendedor. Las categorías las administra PAHO (Admin SDK / consola).
     match /productos/{productoId} {
       allow read: if true;
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.vendedorId;
-      allow update, delete: if request.auth != null
+      allow update: if request.auth != null
         && request.auth.uid == resource.data.vendedorId;
+      allow delete: if request.auth != null
+        && (request.auth.uid == resource.data.vendedorId || esAdmin());
     }
 
     match /categorias/{categoriaId} {
@@ -20,13 +31,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Contenido editable del sitio (ej: config/banner con el texto del
+    // banner promocional del home). Lectura pública para que cualquiera
+    // vea el banner; escritura solo para el admin, desde /admin.
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
     // Vendedores: contiene datos fiscales (CUIT, razón social, documento de
     // facturación), así que NO es de lectura pública. El nombre que se ve
     // en el catálogo ya está desnormalizado en cada producto. Solo el
     // propio vendedor puede leer y escribir su perfil.
     match /vendedores/{vendedorId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == vendedorId;
-      allow delete: if false;
+      allow read, create, update: if request.auth != null
+        && (request.auth.uid == vendedorId || esAdmin());
+      allow delete: if esAdmin();
     }
 
     // Perfil general de usuario (comprador o vendedor). Cada usuario solo
@@ -50,7 +70,8 @@ service cloud.firestore {
     match /ordenes/{ordenId} {
       allow read: if request.auth != null &&
         (request.auth.uid == resource.data.compradorId ||
-         request.auth.uid == resource.data.vendedorId);
+         request.auth.uid == resource.data.vendedorId ||
+         esAdmin());
 
       // Excepción quirúrgica, estilo Mercado Libre: el vendedor de esa
       // orden puede marcarla como entregada, pero SOLO puede tocar

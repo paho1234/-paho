@@ -97,7 +97,9 @@ export default async function ProductoPage({
           </div>
 
           <p className="text-sm text-charcoal/70 mb-4">
-            Stock disponible: {producto.stock} unidades
+            {producto.stock > 0
+              ? `Stock disponible: ${producto.stock} unidad${producto.stock === 1 ? "" : "es"}`
+              : "Sin stock disponible por ahora"}
           </p>
 
           <div className="mb-8 space-y-1.5">

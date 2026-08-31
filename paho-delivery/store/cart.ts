@@ -10,6 +10,15 @@ export type ItemCarrito = {
   vendedorId: string;
   cantidad: number;
   envio: Envio;
+  /**
+   * Stock disponible al momento de agregarlo al carrito — se usa para
+   * no dejar sumar más unidades de las que el vendedor tiene cargadas.
+   * Es una foto del momento: si el stock cambia después (por ejemplo,
+   * porque otro comprador se lo llevó) mientras este producto sigue en
+   * el carrito, ese límite no se vuelve a chequear en vivo acá — recién
+   * se revalida al iniciar el pago, del lado del servidor.
+   */
+  stock: number;
 };
 
 type CartState = {
@@ -35,10 +44,14 @@ export const useCartStore = create<CartState>()(
         const items = get().items;
         const existente = items.find((i) => i.id === producto.id);
         if (existente) {
+          const nuevaCantidad = Math.min(
+            existente.cantidad + cantidad,
+            producto.stock
+          );
           set({
             items: items.map((i) =>
               i.id === producto.id
-                ? { ...i, cantidad: i.cantidad + cantidad }
+                ? { ...i, cantidad: nuevaCantidad, stock: producto.stock }
                 : i
             ),
           });
@@ -52,8 +65,9 @@ export const useCartStore = create<CartState>()(
                 precio: producto.precio,
                 vendedor: producto.vendedor,
                 vendedorId: producto.vendedorId,
-                cantidad,
+                cantidad: Math.min(cantidad, producto.stock),
                 envio: producto.envio,
+                stock: producto.stock,
               },
             ],
           });
@@ -69,7 +83,9 @@ export const useCartStore = create<CartState>()(
         }
         set({
           items: get().items.map((i) =>
-            i.id === id ? { ...i, cantidad } : i
+            i.id === id
+              ? { ...i, cantidad: Math.min(cantidad, i.stock) }
+              : i
           ),
         });
       },
@@ -101,18 +117,18 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "paho-carrito",
-      // Subimos la versión cada vez que cambia la forma de ItemCarrito
-      // (acá: se agregó `envio`). Un carrito guardado en el navegador
-      // ANTES de ese cambio no tiene ese campo, y sin este migrate
-      // rompía toda la página del carrito al intentar leer
-      // item.envio.retiro de un item sin envio. En vez de mostrar una
-      // pantalla en blanco, si detecta datos de una versión vieja
-      // simplemente vacía el carrito — el comprador solo tiene que
-      // volver a agregar los productos, no es un dato que valga la pena
-      // migrar a mano.
-      version: 2,
+      // Subimos la versión cada vez que cambia la forma de ItemCarrito.
+      // v2: se agregó `envio`. v3: se agregó `stock`, necesario para no
+      // dejar sumar más unidades de las que el vendedor tiene cargadas.
+      // Un carrito guardado en el navegador con una versión anterior no
+      // tiene esos campos, y sin este migrate rompía la página del
+      // carrito. En vez de mostrar una pantalla en blanco, si detecta
+      // datos de una versión vieja simplemente vacía el carrito — el
+      // comprador solo tiene que volver a agregar los productos, no es
+      // un dato que valga la pena migrar a mano.
+      version: 3,
       migrate: (persistedState, version) => {
-        if (version < 2) {
+        if (version < 3) {
           return { items: [] };
         }
         return persistedState as CartState;

@@ -1,7 +1,10 @@
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 import ZonaCobertura from "@/components/ZonaCobertura";
-import { getProductos, getCategorias } from "@/lib/firestore";
+import BannerPromo from "@/components/BannerPromo";
+import SeccionProductosHorizontal from "@/components/SeccionProductosHorizontal";
+import { getProductos, getCategorias, descuentoPorcentaje } from "@/lib/firestore";
+import { getBannerTexto } from "@/lib/config";
 
 // El catálogo se lee de Firestore en cada request — no tiene sentido
 // generarlo estático en build time.
@@ -13,18 +16,34 @@ export default async function Home({
   searchParams: { categoria?: string };
 }) {
   const categoriaActiva = searchParams.categoria;
-  const [lista, categorias] = await Promise.all([
+  const [lista, categorias, bannerTexto] = await Promise.all([
     getProductos(categoriaActiva),
     getCategorias(),
+    getBannerTexto(),
   ]);
 
   const nombreCategoria = categorias.find(
     (c) => c.slug === categoriaActiva
   )?.label;
 
+  // Las secciones de "Ofertas" y "Recién llegados" solo tienen sentido
+  // mirando el catálogo completo — si el comprador ya filtró por una
+  // categoría puntual, no tiene caso mostrárselas de nuevo arriba.
+  // `lista` ya ES el catálogo completo cuando no hay categoría activa,
+  // así que no hace falta pedirle nada más a Firestore.
+  const ofertas = categoriaActiva
+    ? []
+    : [...lista]
+        .filter((p) => descuentoPorcentaje(p) !== null)
+        .sort((a, b) => (descuentoPorcentaje(b) ?? 0) - (descuentoPorcentaje(a) ?? 0))
+        .slice(0, 10);
+
+  const recienLlegados = categoriaActiva ? [] : lista.slice(0, 10);
+
   return (
     <main className="min-h-screen bg-paper-texture">
       <Header />
+      <BannerPromo texto={bannerTexto} />
       <ZonaCobertura />
 
       <section className="border-b border-line">
@@ -49,6 +68,28 @@ export default async function Home({
           </p>
         </div>
       </section>
+
+      {ofertas.length > 0 && (
+        <>
+          <SeccionProductosHorizontal
+            titulo="Ofertas destacadas"
+            icono="%"
+            productos={ofertas}
+          />
+          <div className="divider-torn" />
+        </>
+      )}
+
+      {recienLlegados.length > 0 && (
+        <>
+          <SeccionProductosHorizontal
+            titulo="Recién llegados"
+            icono="NEW"
+            productos={recienLlegados}
+          />
+          <div className="divider-torn" />
+        </>
+      )}
 
       <div className="divider-torn" />
 
