@@ -11,9 +11,17 @@ const BANNER_TEXTO_DEFAULT =
  * para que el sitio nunca se quede sin banner.
  */
 export async function getBannerTexto(): Promise<string> {
-  const snap = await getDoc(doc(db, "config", "banner"));
-  const texto = snap.exists() ? (snap.data().texto as string) : null;
-  return texto?.trim() ? texto : BANNER_TEXTO_DEFAULT;
+  try {
+    const snap = await getDoc(doc(db, "config", "banner"));
+    const texto = snap.exists() ? (snap.data().texto as string) : null;
+    return texto?.trim() ? texto : BANNER_TEXTO_DEFAULT;
+  } catch {
+    // Si Firestore rechaza la lectura (por ejemplo, si las reglas de
+    // seguridad todavía no se publicaron desde Firebase Console) no
+    // tiene sentido tirar abajo TODO el home por un banner — mejor
+    // mostrar el texto por defecto y que el resto del sitio funcione.
+    return BANNER_TEXTO_DEFAULT;
+  }
 }
 
 export async function setBannerTexto(texto: string): Promise<void> {
