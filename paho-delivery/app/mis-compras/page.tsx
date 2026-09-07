@@ -70,7 +70,7 @@ export default function MisComprasPage() {
           </Link>
         </div>
         <p className="text-charcoal/60 text-sm mb-10">
-          Acá vas a ver todo lo que compraste en PAHÓ.
+          Acá vas a ver todo lo que compraste en Todo Regalado.
         </p>
 
         {cargandoPedidos ? (

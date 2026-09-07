@@ -59,7 +59,7 @@ export default function EtiquetaPage({ params }: { params: { id: string } }) {
   const etiquetaContenido = (
     <>
       <p className="etiqueta-marca text-[10px] font-mono uppercase tracking-wider text-charcoal/50 mb-1">
-        PAHÓ · {producto.categoriaLabel}
+        Todo Regalado · {producto.categoriaLabel}
       </p>
       <h1 className="etiqueta-titulo font-display text-sm font-semibold leading-tight mb-1">
         {producto.titulo}

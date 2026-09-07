@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import {
   doc,
@@ -189,4 +190,16 @@ export async function iniciarSesion(email: string, password: string) {
 export async function cerrarSesion() {
   const auth = getFirebaseAuth();
   await signOut(auth);
+}
+
+/**
+ * Manda el mail de "restablecer contraseña" de Firebase Auth al email
+ * indicado. Por seguridad, Firebase no distingue entre "el email no
+ * existe" y "se mandó bien" — siempre conviene mostrar el mismo
+ * mensaje de éxito al usuario, para no revelar qué emails están
+ * registrados en el sitio.
+ */
+export async function enviarResetPassword(email: string) {
+  const auth = getFirebaseAuth();
+  await sendPasswordResetEmail(auth, email);
 }

@@ -61,6 +61,12 @@ export default function LoginPage() {
               required
               className="w-full border border-line rounded-stamp px-3 py-2 text-sm outline-none focus:border-ink transition-colors bg-white"
             />
+            <Link
+              href="/login/olvide-password"
+              className="text-xs text-charcoal/60 underline mt-1 inline-block"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
           </label>
 
           {error && <p className="text-clay text-sm font-medium">{error}</p>}

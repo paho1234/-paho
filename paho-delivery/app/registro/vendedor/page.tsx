@@ -108,7 +108,7 @@ export default function RegistroVendedorPage() {
           Cuenta de vendedor
         </h1>
         <p className="text-sm text-charcoal/60 mb-8">
-          PAHÓ es un outlet de devoluciones y liquidaciones: solo se
+          Todo Regalado es un outlet de devoluciones y liquidaciones: solo se
           publican productos con descuento real y condición declarada.
           Necesitamos tus datos fiscales para poder facturar tus ventas.
         </p>
@@ -194,7 +194,7 @@ export default function RegistroVendedorPage() {
               Envío a domicilio (AMBA)
             </span>
             <p className="text-xs text-charcoal/60 mb-3">
-              Todo lo que publiques en PAHÓ ofrece retiro en tu local Y
+              Todo lo que publiques en Todo Regalado ofrece retiro en tu local Y
               envío a domicilio dentro de CABA y GBA — las dos opciones son
               obligatorias, no se pueden desactivar por producto. Definí
               acá tu tarifa fija de envío: se cobra{" "}

@@ -7,10 +7,10 @@ export default function RegistroPage() {
       <Header />
       <section className="mx-auto max-w-2xl px-5 py-16">
         <h1 className="font-display text-3xl font-semibold mb-2 text-center">
-          Creá tu cuenta en PAHÓ
+          Creá tu cuenta en Todo Regalado
         </h1>
         <p className="text-center text-charcoal/60 text-sm mb-10">
-          ¿Cómo querés usar PAHÓ?
+          ¿Cómo querés usar Todo Regalado?
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4">

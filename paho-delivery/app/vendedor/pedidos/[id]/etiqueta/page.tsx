@@ -87,7 +87,7 @@ export default function EtiquetaPedidoPage({ params }: { params: { id: string } 
     <>
       <div className="flex items-start justify-between mb-2">
         <p className="etiqueta-marca text-[10px] font-mono uppercase tracking-wider text-charcoal/50">
-          PAHÓ · Pedido #{codigoCorto}
+          Todo Regalado · Pedido #{codigoCorto}
         </p>
         <span className="etiqueta-metodo text-[9px] font-mono uppercase bg-ink text-paper px-1.5 py-0.5 rounded-sm">
           {pedido.envio.metodo === "domicilio" ? "Envío" : "Retiro"}

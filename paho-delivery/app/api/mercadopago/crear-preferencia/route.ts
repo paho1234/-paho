@@ -253,9 +253,9 @@ export async function POST(req: NextRequest) {
         },
         auto_return: "approved",
         notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/mercadopago/webhook`,
-        // Sin tilde a propósito: el resumen bancario del comprador suele
-        // restringir el descriptor a caracteres ASCII simples.
-        statement_descriptor: "PAHO",
+        // Sin tilde ni ñ a propósito: el resumen bancario del comprador
+        // suele restringir el descriptor a caracteres ASCII simples.
+        statement_descriptor: "TODOREGALADO",
       },
     });
 

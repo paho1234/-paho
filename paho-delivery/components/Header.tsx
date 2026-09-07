@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingBag, User } from "lucide-react";
+import { LogoHeader } from "@/components/Logo";
 import { useCartStore } from "@/store/cart";
 import { getCategoriasConProductos, type Categoria } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -37,8 +38,7 @@ export default function Header() {
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex items-center gap-6 py-3">
           <Link href="/" className="shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-header.png" alt="PAHÓ Outlet" className="h-11 w-auto" />
+            <LogoHeader />
           </Link>
 
           <div className="hidden md:flex flex-1 items-center bg-white border border-line rounded-stamp px-3 py-2 text-charcoal">

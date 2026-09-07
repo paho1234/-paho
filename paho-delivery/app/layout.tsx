@@ -16,7 +16,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "PAHÓ — Outlet de devoluciones",
+  title: "Todo Regalado — Outlet de devoluciones",
   description:
     "Devoluciones, reacondicionados y liquidaciones de marcas reales, hasta 70% menos. Condición declarada, sin sorpresas.",
 };

@@ -30,7 +30,7 @@ export default function ProductCard({ producto }: { producto: Producto }) {
       href={`/producto/${producto.id}`}
       className="group block bg-white border border-line rounded-stamp hover:border-ink/30 hover:shadow-md transition-all"
     >
-      {/* La foto redonda es el sello distintivo de PAHÓ — reemplaza la
+      {/* La foto redonda es el sello distintivo de Todo Regalado — reemplaza la
           típica miniatura cuadrada de un marketplace, y hace que el
           catálogo se lea como una vidriera de "medallones" curados, no
           como una grilla genérica de e-commerce. */}
