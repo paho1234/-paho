@@ -5,18 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
-import { getBannerTexto, setBannerTexto } from "@/lib/config";
+import { getBannerTexto, setBannerTexto, getLogoUrl, setLogoUrl } from "@/lib/config";
 import {
   getTodosLosProductosAdmin,
   borrarProductoAdmin,
   getTodasLasVentasAdmin,
   getTodosLosVendedoresAdmin,
   borrarVendedorAdmin,
+  subirLogoAdmin,
   type VentaAdmin,
   type VendedorAdmin,
 } from "@/lib/admin";
 import { formatARS, condicionLabel, type Producto } from "@/lib/firestore";
-import { Trash2, Save, ShieldCheck } from "lucide-react";
+import { Trash2, Save, ShieldCheck, ImageIcon } from "lucide-react";
 
 const estadoVentaLabel: Record<VentaAdmin["estado"], string> = {
   pendiente_pago: "Pago pendiente",
@@ -38,6 +39,13 @@ export default function AdminPage() {
   const [bannerCargando, setBannerCargando] = useState(true);
   const [bannerGuardando, setBannerGuardando] = useState(false);
   const [bannerMensaje, setBannerMensaje] = useState<string | null>(null);
+
+  const [logoUrl, setLogoUrlLocal] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoArchivo, setLogoArchivo] = useState<File | null>(null);
+  const [logoCargando, setLogoCargando] = useState(true);
+  const [logoGuardando, setLogoGuardando] = useState(false);
+  const [logoMensaje, setLogoMensaje] = useState<string | null>(null);
 
   const [productos, setProductos] = useState<Producto[]>([]);
   const [productosCargando, setProductosCargando] = useState(true);
@@ -64,6 +72,9 @@ export default function AdminPage() {
     getBannerTexto()
       .then(setBannerTextoLocal)
       .finally(() => setBannerCargando(false));
+    getLogoUrl()
+      .then(setLogoUrlLocal)
+      .finally(() => setLogoCargando(false));
     getTodosLosProductosAdmin()
       .then(setProductos)
       .catch(() => setError("No pudimos cargar los productos."))
@@ -82,6 +93,32 @@ export default function AdminPage() {
   // ventas (la orden solo guarda vendedorId, no el nombre de fantasía).
   const nombreVendedor = (vendedorId: string) =>
     vendedores.find((v) => v.id === vendedorId)?.nombreEmpresa ?? vendedorId;
+
+  function handleElegirLogo(e: { target: HTMLInputElement }) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoArchivo(file);
+    setLogoMensaje(null);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function handleGuardarLogo() {
+    if (!logoArchivo) return;
+    setLogoGuardando(true);
+    setLogoMensaje(null);
+    try {
+      const url = await subirLogoAdmin(logoArchivo);
+      await setLogoUrl(url);
+      setLogoUrlLocal(url);
+      setLogoArchivo(null);
+      setLogoPreview(null);
+      setLogoMensaje("Logo actualizado.");
+    } catch {
+      setLogoMensaje("No se pudo subir el logo. Probá de nuevo.");
+    } finally {
+      setLogoGuardando(false);
+    }
+  }
 
   async function handleGuardarBanner() {
     setBannerGuardando(true);
@@ -157,6 +194,67 @@ export default function AdminPage() {
           Editá el banner del home y moderá publicaciones de cualquier
           vendedor.
         </p>
+
+        {/* --- Logo --- */}
+        <div className="ficha bg-white border border-line p-5 mb-10">
+          <h2 className="font-display text-lg font-semibold mb-3">
+            Logo del sitio
+          </h2>
+          {logoCargando ? (
+            <p className="text-sm text-charcoal/50">Cargando…</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-20 h-20 rounded-stamp border border-line bg-paper flex items-center justify-center overflow-hidden">
+                  {logoPreview || logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoPreview ?? logoUrl ?? ""}
+                      alt="Logo actual"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  ) : (
+                    <ImageIcon size={22} className="text-charcoal/30" />
+                  )}
+                </div>
+                <div>
+                  <label className="inline-flex items-center gap-1.5 text-sm text-ink border border-line rounded-stamp px-3 py-2 cursor-pointer hover:border-ink/40 transition-colors">
+                    Elegir imagen…
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleElegirLogo}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-[11px] text-charcoal/50 mt-1">
+                    PNG o JPG, hasta 5 MB. Se recomienda fondo transparente.
+                  </p>
+                </div>
+              </div>
+              {logoArchivo && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleGuardarLogo}
+                    disabled={logoGuardando}
+                    className="inline-flex items-center gap-1.5 text-sm bg-ink text-white font-medium rounded-stamp px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+                  >
+                    <Save size={14} />
+                    {logoGuardando ? "Subiendo…" : "Guardar logo nuevo"}
+                  </button>
+                  <span className="text-xs text-charcoal/60">
+                    {logoArchivo.name}
+                  </span>
+                </div>
+              )}
+              {logoMensaje && (
+                <span className="text-xs text-charcoal/60 block mt-2">
+                  {logoMensaje}
+                </span>
+              )}
+            </>
+          )}
+        </div>
 
         {/* --- Banner --- */}
         <div className="ficha bg-white border border-line p-5 mb-10">

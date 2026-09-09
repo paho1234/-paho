@@ -27,3 +27,21 @@ export async function getBannerTexto(): Promise<string> {
 export async function setBannerTexto(texto: string): Promise<void> {
   await setDoc(doc(db, "config", "banner"), { texto }, { merge: true });
 }
+
+/**
+ * URL del logo del sitio, subido desde /admin. Si nunca se subió uno,
+ * devuelve null — quien lo use debe mostrar un logo de respaldo (ver
+ * <LogoHeader /> en components/Logo.tsx) en ese caso.
+ */
+export async function getLogoUrl(): Promise<string | null> {
+  try {
+    const snap = await getDoc(doc(db, "config", "logo"));
+    return snap.exists() ? (snap.data().url as string) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setLogoUrl(url: string): Promise<void> {
+  await setDoc(doc(db, "config", "logo"), { url }, { merge: true });
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { notificarVentaAlVendedor, notificarCompraAlComprador } from "@/lib/email";
 
 // Mercado Pago llama a esta URL cada vez que hay novedades sobre un
 // pago (creado, actualizado). Acá es donde recién confirmamos la venta
@@ -48,6 +49,19 @@ export async function POST(req: NextRequest) {
     const ordenRef = db.collection("ordenes").doc(ordenId);
 
     if (estadoPago === "approved") {
+      // Se completa dentro de la transacción con los datos de la orden,
+      // para poder armar los mails después SIN volver a leer Firestore
+      // — y para saber si esta llamada fue la que realmente confirmó
+      // el pago (y hay que mandar los mails) o si ya estaba procesada
+      // de antes (notificación repetida de MP, no se manda de nuevo).
+      let ordenConfirmadaAhora: {
+        items: { id: string; titulo: string; cantidad: number }[];
+        total: number;
+        envio: any;
+        compradorId: string;
+        vendedorId: string;
+      } | null = null;
+
       await db.runTransaction(async (tx) => {
         const ordenSnap = await tx.get(ordenRef);
         if (!ordenSnap.exists) return;
@@ -57,7 +71,8 @@ export async function POST(req: NextRequest) {
         // stock dos veces para el mismo pago.
         if (orden.estado === "pagado") return;
 
-        const items: { id: string; cantidad: number }[] = orden.items ?? [];
+        const items: { id: string; titulo: string; cantidad: number }[] =
+          orden.items ?? [];
         const productoRefs = items.map((i) =>
           db.collection("productos").doc(i.id)
         );
@@ -72,7 +87,47 @@ export async function POST(req: NextRequest) {
         });
 
         tx.update(ordenRef, { estado: "pagado" });
+
+        ordenConfirmadaAhora = {
+          items,
+          total: orden.total ?? 0,
+          envio: orden.envio,
+          compradorId: orden.compradorId,
+          vendedorId: orden.vendedorId,
+        };
       });
+
+      // Mails fuera de la transacción (una transacción puede reintentarse
+      // sola ante conflictos — no queremos mandar mails de más si eso
+      // pasa). Si algo falla acá, no rompe el webhook: ver enviar() en
+      // lib/email.ts, que traga sus propios errores.
+      if (ordenConfirmadaAhora) {
+        const [vendedorSnap, compradorSnap] = await Promise.all([
+          db.collection("vendedores").doc(ordenConfirmadaAhora.vendedorId).get(),
+          db.collection("usuarios").doc(ordenConfirmadaAhora.compradorId).get(),
+        ]);
+        const emailVendedor = vendedorSnap.data()?.email;
+        const emailComprador = compradorSnap.data()?.email;
+
+        await Promise.all([
+          emailVendedor
+            ? notificarVentaAlVendedor({
+                emailVendedor,
+                items: ordenConfirmadaAhora.items,
+                total: ordenConfirmadaAhora.total,
+                envio: ordenConfirmadaAhora.envio,
+              })
+            : null,
+          emailComprador
+            ? notificarCompraAlComprador({
+                emailComprador,
+                items: ordenConfirmadaAhora.items,
+                total: ordenConfirmadaAhora.total,
+                envio: ordenConfirmadaAhora.envio,
+              })
+            : null,
+        ]);
+      }
     } else if (estadoPago === "rejected" || estadoPago === "cancelled") {
       // No se descuenta stock nunca para un pago rechazado/cancelado
       // (nunca se llegó a tocar). Solo se refleja el estado para que

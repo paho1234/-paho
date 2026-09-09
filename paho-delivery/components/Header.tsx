@@ -6,12 +6,14 @@ import { Search, ShoppingBag, User } from "lucide-react";
 import { LogoHeader } from "@/components/Logo";
 import { useCartStore } from "@/store/cart";
 import { getCategoriasConProductos, type Categoria } from "@/lib/firestore";
+import { getLogoUrl } from "@/lib/config";
 import { useAuth } from "@/contexts/AuthProvider";
 import { cerrarSesion } from "@/lib/auth";
 
 export default function Header() {
   const cantidad = useCartStore((s) => s.cantidadTotal());
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const { user, rol, esAdmin, cargando } = useAuth();
 
   // FIX (error de hidratación #425): el carrito (Zustand + persist)
@@ -33,12 +35,21 @@ export default function Header() {
       .catch(() => setCategorias([]));
   }, []);
 
+  useEffect(() => {
+    getLogoUrl().then(setLogoUrl);
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 bg-paper border-b border-line">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex items-center gap-6 py-3">
           <Link href="/" className="shrink-0">
-            <LogoHeader />
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Todo Regalado" className="h-9 w-auto" />
+            ) : (
+              <LogoHeader />
+            )}
           </Link>
 
           <div className="hidden md:flex flex-1 items-center bg-white border border-line rounded-stamp px-3 py-2 text-charcoal">

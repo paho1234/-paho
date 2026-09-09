@@ -7,7 +7,8 @@ import {
   deleteDoc,
   type DocumentData,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, getFirebaseStorage } from "@/lib/firebase";
 import type { Producto } from "@/lib/firestore";
 import type { Envio, ItemOrden, EstadoEntrega } from "@/lib/ordenes";
 
@@ -146,4 +147,22 @@ export async function getTodosLosVendedoresAdmin(): Promise<VendedorAdmin[]> {
  */
 export async function borrarVendedorAdmin(vendedorId: string): Promise<void> {
   await deleteDoc(doc(db, "vendedores", vendedorId));
+}
+
+// --- Logo del sitio ---
+
+/**
+ * Sube un archivo de imagen a Storage (carpeta config/logo/) y devuelve
+ * su URL pública. Quien llame a esto es responsable de guardar esa URL
+ * en Firestore después (ver setLogoUrl en lib/config.ts) — subir el
+ * archivo y guardar la URL son dos pasos separados a propósito, para
+ * poder mostrar una vista previa antes de confirmar el cambio.
+ */
+export async function subirLogoAdmin(file: File): Promise<string> {
+  const storage = getFirebaseStorage();
+  // Nombre único por subida (timestamp) para evitar que el navegador
+  // muestre una versión vieja cacheada al reemplazar el logo.
+  const storageRef = ref(storage, `config/logo/${Date.now()}-${file.name}`);
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
 }
