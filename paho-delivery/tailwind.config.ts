@@ -9,19 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        paper: "#FAF6EF",
+        paper: "#FFFFFF",
         ink: {
-          DEFAULT: "#1B2A3D",
-          light: "#2C4258",
+          DEFAULT: "#5C1417",
+          light: "#7A2020",
         },
-        charcoal: "#23201B",
+        charcoal: "#1A1A1A",
         amber: {
           DEFAULT: "#E8A33D",
           dark: "#C7821F",
         },
-        clay: "#D65F4C",
-        moss: "#3C7A5E",
-        line: "#E4DCC9",
+        clay: "#E33A2E",
+        moss: "#1F7A4D",
+        line: "#EAEAEA",
       },
       fontFamily: {
         display: ["var(--font-fraunces)", "serif"],
@@ -29,7 +29,7 @@ const config: Config = {
         mono: ["var(--font-jbmono)", "monospace"],
       },
       borderRadius: {
-        stamp: "3px",
+        stamp: "14px",
       },
     },
   },

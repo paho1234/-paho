@@ -46,7 +46,7 @@ export default async function ProductoPage({
               />
             ) : (
               <span
-                className="font-display italic text-xl px-8 text-center leading-tight"
+                className="font-display text-xl px-8 text-center leading-tight"
                 style={{ color: producto.imagenColor }}
               >
                 {producto.titulo}

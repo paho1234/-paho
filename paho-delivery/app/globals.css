@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --font-display: "Fraunces", serif;
+  --font-display: "Baloo 2", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 }
@@ -20,42 +20,32 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Textura de papel sutil sobre el fondo crema */
+/* Fondo liso — antes tenía una textura de papel, ahora un blanco limpio */
 .bg-paper-texture {
-  background-color: #FAF6EF;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(27, 42, 61, 0.05) 1px, transparent 0);
-  background-size: 22px 22px;
+  background-color: #FFFFFF;
 }
 
-/* Sello circular rotado — insignia de categoría en cada "ficha" de producto */
+/* Insignia circular — sin rotación, look más limpio que la versión "sello de feria" */
 .stamp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1.5px solid currentColor;
   border-radius: 999px;
-  transform: rotate(-8deg);
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-weight: 700;
 }
 
-/* Borde tipo "recorte" con muescas — evoca el ticket / etiqueta de feria */
+/* Tarjeta con esquinas redondeadas y sombra suave */
 .ficha {
   position: relative;
-  clip-path: polygon(
-    0% 4px, 4px 0%, calc(100% - 4px) 0%, 100% 4px,
-    100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0% calc(100% - 4px)
-  );
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
 
 .divider-torn {
-  height: 10px;
-  background-image: linear-gradient(135deg, #FAF6EF 50%, transparent 50%),
-    linear-gradient(225deg, #FAF6EF 50%, transparent 50%);
-  background-size: 14px 14px;
-  background-position: bottom;
-  background-repeat: repeat-x;
+  height: 1px;
+  background-color: #EAEAEA;
 }
 
 @layer utilities {

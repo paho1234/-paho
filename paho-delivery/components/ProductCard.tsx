@@ -59,7 +59,7 @@ export default function ProductCard({ producto }: { producto: Producto }) {
             />
           ) : (
             <span
-              className="font-display italic text-base px-3 text-center leading-tight"
+              className="font-display text-base px-3 text-center leading-tight"
               style={{ color: producto.imagenColor }}
             >
               {producto.titulo.split(" ").slice(0, 2).join(" ")}

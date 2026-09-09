@@ -40,7 +40,7 @@ export function LogoHeader() {
   return (
     <span className="inline-flex items-center gap-2">
       <EtiquetaRegalo size={26} />
-      <span className="font-display italic font-semibold text-xl leading-none text-ink">
+      <span className="font-display font-semibold text-xl leading-none text-ink">
         Todo Regalado
       </span>
     </span>
@@ -51,7 +51,7 @@ export function LogoHero() {
   return (
     <span className="inline-flex flex-col items-center gap-2">
       <EtiquetaRegalo size={52} />
-      <span className="font-display italic font-semibold text-4xl md:text-5xl leading-none text-ink text-center">
+      <span className="font-display font-semibold text-4xl md:text-5xl leading-none text-ink text-center">
         Todo Regalado
       </span>
     </span>

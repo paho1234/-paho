@@ -49,7 +49,7 @@ export default async function Home({
 
       <section className="border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-14 md:py-20 flex flex-col items-center text-center">
-          <h1 className="font-display italic font-semibold text-3xl md:text-4xl text-ink">
+          <h1 className="font-display font-semibold text-3xl md:text-4xl text-ink">
             Todo Regalado
           </h1>
           <p className="mt-3 max-w-lg text-charcoal/70 text-base md:text-lg">
