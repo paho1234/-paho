@@ -49,53 +49,57 @@ export async function POST(req: NextRequest) {
     const ordenRef = db.collection("ordenes").doc(ordenId);
 
     if (estadoPago === "approved") {
-      // Se completa dentro de la transacción con los datos de la orden,
-      // para poder armar los mails después SIN volver a leer Firestore
-      // — y para saber si esta llamada fue la que realmente confirmó
-      // el pago (y hay que mandar los mails) o si ya estaba procesada
-      // de antes (notificación repetida de MP, no se manda de nuevo).
-      let ordenConfirmadaAhora: {
+      type OrdenConfirmada = {
         items: { id: string; titulo: string; cantidad: number }[];
         total: number;
         envio: any;
         compradorId: string;
         vendedorId: string;
-      } | null = null;
+      };
 
-      await db.runTransaction(async (tx) => {
-        const ordenSnap = await tx.get(ordenRef);
-        if (!ordenSnap.exists) return;
-        const orden = ordenSnap.data()!;
+      // La transacción devuelve los datos de la orden (para armar los
+      // mails después SIN volver a leer Firestore) o null si esta
+      // notificación no fue la que confirmó el pago — porque ya estaba
+      // procesada de antes (aviso repetido de MP) o la orden no existe.
+      // Usar el valor de retorno de runTransaction, en vez de reasignar
+      // una variable de afuera desde dentro del callback, evita además
+      // un problema de inferencia de tipos de TypeScript con closures
+      // async (terminaba viendo esta variable como `never`).
+      const ordenConfirmadaAhora: OrdenConfirmada | null =
+        await db.runTransaction(async (tx): Promise<OrdenConfirmada | null> => {
+          const ordenSnap = await tx.get(ordenRef);
+          if (!ordenSnap.exists) return null;
+          const orden = ordenSnap.data()!;
 
-        // Ya procesado por una notificación anterior — no descontar
-        // stock dos veces para el mismo pago.
-        if (orden.estado === "pagado") return;
+          // Ya procesado por una notificación anterior — no descontar
+          // stock dos veces para el mismo pago.
+          if (orden.estado === "pagado") return null;
 
-        const items: { id: string; titulo: string; cantidad: number }[] =
-          orden.items ?? [];
-        const productoRefs = items.map((i) =>
-          db.collection("productos").doc(i.id)
-        );
-        const productoSnaps =
-          productoRefs.length > 0 ? await tx.getAll(...productoRefs) : [];
+          const items: { id: string; titulo: string; cantidad: number }[] =
+            orden.items ?? [];
+          const productoRefs = items.map((i) =>
+            db.collection("productos").doc(i.id)
+          );
+          const productoSnaps =
+            productoRefs.length > 0 ? await tx.getAll(...productoRefs) : [];
 
-        productoSnaps.forEach((snap, idx) => {
-          if (!snap.exists) return;
-          const stockActual = snap.data()?.stock ?? 0;
-          const nuevoStock = Math.max(0, stockActual - items[idx].cantidad);
-          tx.update(productoRefs[idx], { stock: nuevoStock });
+          productoSnaps.forEach((snap, idx) => {
+            if (!snap.exists) return;
+            const stockActual = snap.data()?.stock ?? 0;
+            const nuevoStock = Math.max(0, stockActual - items[idx].cantidad);
+            tx.update(productoRefs[idx], { stock: nuevoStock });
+          });
+
+          tx.update(ordenRef, { estado: "pagado" });
+
+          return {
+            items,
+            total: orden.total ?? 0,
+            envio: orden.envio,
+            compradorId: orden.compradorId,
+            vendedorId: orden.vendedorId,
+          };
         });
-
-        tx.update(ordenRef, { estado: "pagado" });
-
-        ordenConfirmadaAhora = {
-          items,
-          total: orden.total ?? 0,
-          envio: orden.envio,
-          compradorId: orden.compradorId,
-          vendedorId: orden.vendedorId,
-        };
-      });
 
       // Mails fuera de la transacción (una transacción puede reintentarse
       // sola ante conflictos — no queremos mandar mails de más si eso
