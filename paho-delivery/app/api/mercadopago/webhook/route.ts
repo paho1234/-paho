@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { notificarVentaAlVendedor, notificarCompraAlComprador } from "@/lib/email";
+import type { ItemOrden, Envio } from "@/lib/ordenes";
 
 // Mercado Pago llama a esta URL cada vez que hay novedades sobre un
 // pago (creado, actualizado). Acá es donde recién confirmamos la venta
@@ -50,9 +51,9 @@ export async function POST(req: NextRequest) {
 
     if (estadoPago === "approved") {
       type OrdenConfirmada = {
-        items: { id: string; titulo: string; cantidad: number }[];
+        items: ItemOrden[];
         total: number;
-        envio: any;
+        envio: Envio;
         compradorId: string;
         vendedorId: string;
       };
@@ -75,8 +76,7 @@ export async function POST(req: NextRequest) {
           // stock dos veces para el mismo pago.
           if (orden.estado === "pagado") return null;
 
-          const items: { id: string; titulo: string; cantidad: number }[] =
-            orden.items ?? [];
+          const items: ItemOrden[] = orden.items ?? [];
           const productoRefs = items.map((i) =>
             db.collection("productos").doc(i.id)
           );
