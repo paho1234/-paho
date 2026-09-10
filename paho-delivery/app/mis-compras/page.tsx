@@ -10,7 +10,7 @@ import {
   type PedidoComprador,
 } from "@/lib/pedidos-comprador";
 import { formatARS } from "@/lib/firestore";
-import { CheckCircle2, Clock, Truck } from "lucide-react";
+import { CheckCircle2, Clock, Truck, MapPin } from "lucide-react";
 
 const estadoLabel: Record<PedidoComprador["estado"], string> = {
   pendiente_pago: "Pago pendiente",
@@ -108,6 +108,18 @@ export default function MisComprasPage() {
                         ? "Envío a domicilio"
                         : "Retiro en el local"}
                     </p>
+                    {p.envio?.metodo === "retiro" && p.envio.direccionRetiro && (
+                      <p className="text-xs text-charcoal/70 mt-1 flex items-start gap-1">
+                        <MapPin size={13} className="shrink-0 mt-0.5" />
+                        <span>
+                          {p.envio.direccionRetiro.calle}{" "}
+                          {p.envio.direccionRetiro.numero},{" "}
+                          {p.envio.direccionRetiro.barrio} (
+                          {p.envio.direccionRetiro.zona}, CP{" "}
+                          {p.envio.direccionRetiro.codigoPostal})
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-display font-semibold text-ink">

@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import {
   doc,
+  getDoc,
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
@@ -179,6 +180,59 @@ export async function registrarVendedor(datos: DatosVendedor) {
   });
 
   return cred.user;
+}
+
+/**
+ * Actualiza el perfil de un vendedor ya registrado (dirección de
+ * retiro, costo de envío, nombre de fantasía, etc). A diferencia de
+ * registrarVendedor(), esto no crea cuenta ni sube el documento de
+ * facturación — solo modifica el documento vendedores/{uid} que ya
+ * existe. Las reglas de Firestore ya validan que solo el propio
+ * vendedor (o un admin) pueda hacer esto.
+ */
+export async function actualizarPerfilVendedor(
+  uid: string,
+  datos: {
+    nombreEmpresa: string;
+    razonSocial: string;
+    ofreceRetiro: boolean;
+    direccionRetiro: DireccionRetiro | null;
+    costoEnvioAMBA: number | null;
+  }
+) {
+  await setDoc(doc(db, "vendedores", uid), datos, { merge: true });
+}
+
+export type PerfilVendedor = {
+  nombreEmpresa: string;
+  razonSocial: string;
+  cuit: string;
+  condicionIVA: CondicionIVA;
+  email: string;
+  verificado: boolean;
+  ofreceRetiro: boolean;
+  direccionRetiro: DireccionRetiro | null;
+  costoEnvioAMBA: number | null;
+};
+
+export async function getPerfilVendedor(
+  uid: string
+): Promise<PerfilVendedor | null> {
+  const snap = await getDoc(doc(db, "vendedores", uid));
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    nombreEmpresa: data.nombreEmpresa ?? "",
+    razonSocial: data.razonSocial ?? "",
+    cuit: data.cuit ?? "",
+    condicionIVA: data.condicionIVA ?? "monotributista",
+    email: data.email ?? "",
+    verificado: data.verificado ?? false,
+    ofreceRetiro: data.ofreceRetiro ?? false,
+    direccionRetiro: data.direccionRetiro ?? null,
+    costoEnvioAMBA:
+      typeof data.costoEnvioAMBA === "number" ? data.costoEnvioAMBA : null,
+  };
 }
 
 export async function iniciarSesion(email: string, password: string) {

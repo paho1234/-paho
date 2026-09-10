@@ -19,6 +19,12 @@ const opcionesIVA: { value: CondicionIVA; label: string }[] = [
   { value: "consumidor_final", label: "Consumidor Final" },
 ];
 
+// Cambiar a `true` cuando se vuelva a abrir el registro público de
+// vendedores. Mientras esté en `false`, esta página muestra un aviso
+// en vez del formulario — el formulario en sí queda intacto más abajo,
+// no hay que reconstruir nada para reabrirlo.
+const REGISTRO_VENDEDOR_ABIERTO = false;
+
 export default function RegistroVendedorPage() {
   const router = useRouter();
   const [nombreEmpresa, setNombreEmpresa] = useState("");
@@ -38,6 +44,29 @@ export default function RegistroVendedorPage() {
   const [costoEnvioAMBA, setCostoEnvioAMBA] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+
+  if (!REGISTRO_VENDEDOR_ABIERTO) {
+    return (
+      <main className="min-h-screen bg-paper-texture">
+        <Header />
+        <section className="mx-auto max-w-md px-5 py-16 text-center">
+          <h1 className="font-display text-3xl font-semibold mb-3">
+            Muy pronto
+          </h1>
+          <p className="text-charcoal/70 mb-2">
+            Pronto vas a poder registrarte como vendedor en Todo Regalado.
+          </p>
+          <p className="text-charcoal/70 mb-8">
+            Por ahora, el único vendedor activo en la plataforma es{" "}
+            <strong>Patagonia Home</strong>.
+          </p>
+          <Link href="/" className="text-ink underline font-medium">
+            ← Volver al catálogo
+          </Link>
+        </section>
+      </main>
+    );
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

@@ -31,8 +31,11 @@ export default function RegistroPage() {
 
           <Link
             href="/registro/vendedor"
-            className="ficha bg-white border border-line hover:border-ink/40 transition-colors p-8 text-center"
+            className="ficha bg-white border border-line hover:border-ink/40 transition-colors p-8 text-center relative"
           >
+            <span className="absolute top-3 right-3 text-[10px] font-mono uppercase text-amber-dark bg-amber/10 px-2 py-1 rounded-sm">
+              Muy pronto
+            </span>
             <span className="stamp w-12 h-12 mx-auto mb-4 text-lg text-amber-dark border-amber-dark">
               🏪
             </span>

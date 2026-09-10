@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
 import { getProductosDeVendedor } from "@/lib/productos-vendedor";
 import { formatARS, type Producto } from "@/lib/firestore";
-import { Plus, Tag, Package } from "lucide-react";
+import { Plus, Tag, Package, Settings } from "lucide-react";
 
 export default function VendedorPage() {
   const { user, rol, cargando } = useAuth();
@@ -53,6 +53,13 @@ export default function VendedorPage() {
             Panel de vendedor
           </h1>
           <div className="flex items-center gap-2">
+            <Link
+              href="/vendedor/perfil"
+              className="flex items-center gap-1.5 border border-line text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:border-ink/40 transition-colors"
+            >
+              <Settings size={16} />
+              Mi perfil
+            </Link>
             <Link
               href="/vendedor/pedidos"
               className="flex items-center gap-1.5 border border-line text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:border-ink/40 transition-colors"
