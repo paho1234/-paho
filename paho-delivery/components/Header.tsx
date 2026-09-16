@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, User } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { getCategoriasConProductos, type Categoria } from "@/lib/firestore";
 import { getLogoUrl } from "@/lib/config";
@@ -13,6 +13,7 @@ export default function Header() {
   const cantidad = useCartStore((s) => s.cantidadTotal());
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const { user, rol, esAdmin, cargando } = useAuth();
 
   // FIX (error de hidratación #425): el carrito (Zustand + persist)
@@ -128,8 +129,88 @@ export default function Header() {
                 Carrito
               </span>
             </Link>
+
+            {/* Botón de menú — solo en mobile, ya que arriba ocultamos
+                los links de cuenta/panel con "hidden sm:flex" y nunca
+                había quedado ninguna forma de acceder a ellos en
+                pantallas chicas. */}
+            <button
+              onClick={() => setMenuAbierto((v) => !v)}
+              className="sm:hidden text-ink p-1"
+              aria-label="Menú"
+            >
+              {menuAbierto ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
+
+        {menuAbierto && (
+          <div className="sm:hidden border-t border-line py-3 space-y-3 text-sm">
+            {!cargando && !user && (
+              <div className="flex flex-col gap-3 text-charcoal/80">
+                <Link
+                  href="/login"
+                  onClick={() => setMenuAbierto(false)}
+                  className="hover:text-amber-dark transition-colors"
+                >
+                  Ingresar
+                </Link>
+                <Link
+                  href="/registro"
+                  onClick={() => setMenuAbierto(false)}
+                  className="hover:text-amber-dark transition-colors"
+                >
+                  Registrarme
+                </Link>
+              </div>
+            )}
+
+            {!cargando && user && (
+              <div className="flex flex-col gap-3 text-charcoal/80">
+                <span className="flex items-center gap-1.5 text-charcoal/70">
+                  <User size={15} />
+                  {user.displayName ?? user.email}
+                </span>
+                {rol === "vendedor" && (
+                  <Link
+                    href="/vendedor"
+                    onClick={() => setMenuAbierto(false)}
+                    className="hover:text-amber-dark transition-colors"
+                  >
+                    Mi panel
+                  </Link>
+                )}
+                {rol === "comprador" && (
+                  <Link
+                    href="/mis-compras"
+                    onClick={() => setMenuAbierto(false)}
+                    className="hover:text-amber-dark transition-colors"
+                  >
+                    Mis compras
+                  </Link>
+                )}
+                {esAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuAbierto(false)}
+                    className="hover:text-amber-dark transition-colors"
+                  >
+                    Panel admin
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setMenuAbierto(false);
+                    cerrarSesion();
+                  }}
+                  className="text-left hover:text-amber-dark transition-colors"
+                >
+                  Salir
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <nav className="flex gap-5 overflow-x-auto pb-3 text-sm">
           {categorias.map((c) => (
