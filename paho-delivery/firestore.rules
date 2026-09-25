@@ -88,5 +88,36 @@ service cloud.firestore {
 
       allow create, delete: if false;
     }
+
+    // Mensajería interna por pedido: un chat simple entre el comprador y
+    // el vendedor de ESA orden puntual, para no tener que compartir
+    // datos de contacto fuera de ese contexto (mismo criterio de
+    // privacidad que el resto del sitio). Nadie más puede leer ni
+    // escribir acá, ni siquiera el vendedor/comprador de OTRA orden.
+    // Los mensajes son inmutables: se pueden crear y leer, pero no
+    // editar ni borrar.
+    match /ordenes/{ordenId}/mensajes/{mensajeId} {
+      function ordenPadre() {
+        return get(/databases/$(database)/documents/ordenes/$(ordenId)).data;
+      }
+      function esParteDeLaOrden() {
+        return request.auth != null &&
+          (request.auth.uid == ordenPadre().compradorId ||
+           request.auth.uid == ordenPadre().vendedorId);
+      }
+
+      allow read: if esParteDeLaOrden() || esAdmin();
+
+      // Solo se puede crear un mensaje a nombre de uno mismo (no se
+      // puede falsificar el autor), con texto no vacío y con un límite
+      // de tamaño razonable para evitar abuso.
+      allow create: if esParteDeLaOrden()
+        && request.resource.data.autorId == request.auth.uid
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 2000;
+
+      allow update, delete: if false;
+    }
   }
 }
