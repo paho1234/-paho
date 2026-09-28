@@ -41,7 +41,7 @@ export default function MisComprasPage() {
   useEffect(() => {
     if (!user) return;
     getPedidosDeComprador(user.uid)
-      .then(setPedidos)
+      .then((todos) => setPedidos(todos.filter((p) => p.estado === "pagado")))
       .catch(() => setError("No pudimos cargar tus compras."))
       .finally(() => setCargandoPedidos(false));
   }, [user]);
@@ -70,7 +70,7 @@ export default function MisComprasPage() {
           </Link>
         </div>
         <p className="text-charcoal/60 text-sm mb-10">
-          Acá vas a ver todo lo que compraste en Todo Regalado.
+          Acá aparecen tus compras con el pago ya confirmado.
         </p>
 
         {cargandoPedidos ? (
@@ -79,7 +79,7 @@ export default function MisComprasPage() {
           <p className="text-sm text-clay">{error}</p>
         ) : pedidos.length === 0 ? (
           <div className="ficha bg-white border border-line p-8 text-center text-sm text-charcoal/60">
-            Todavía no hiciste ninguna compra.
+            Todavía no tenés compras con el pago confirmado.
           </div>
         ) : (
           <div className="space-y-2">

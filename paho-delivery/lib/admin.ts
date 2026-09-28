@@ -5,6 +5,8 @@ import {
   orderBy,
   doc,
   deleteDoc,
+  addDoc,
+  serverTimestamp,
   type DocumentData,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -165,4 +167,54 @@ export async function subirLogoAdmin(file: File): Promise<string> {
   const storageRef = ref(storage, `config/logo/${Date.now()}-${file.name}`);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+}
+
+// --- Cuenta corriente: pagos a vendedores ---
+
+export type PagoAdmin = {
+  id: string;
+  vendedorId: string;
+  monto: number;
+  nota: string;
+  creadoEn: Date | null;
+};
+
+function docToPagoAdmin(id: string, data: DocumentData): PagoAdmin {
+  return {
+    id,
+    vendedorId: data.vendedorId,
+    monto: data.monto ?? 0,
+    nota: data.nota ?? "",
+    creadoEn: data.creadoEn?.toDate ? data.creadoEn.toDate() : null,
+  };
+}
+
+/**
+ * Trae TODOS los pagos hechos a TODOS los vendedores, para poder armar
+ * el resumen de cuenta corriente de cada uno en un solo listado. No
+ * requiere índice compuesto: sin `where`, solo orden simple por fecha.
+ */
+export async function getTodosLosPagosAdmin(): Promise<PagoAdmin[]> {
+  const ref = collection(db, "pagos");
+  const snap = await getDocs(query(ref, orderBy("creadoEn", "desc")));
+  return snap.docs.map((d) => docToPagoAdmin(d.id, d.data()));
+}
+
+/**
+ * Registra una transferencia de Todo Regalado a un vendedor (pago
+ * mensual de su saldo pendiente). Las reglas de Firestore son las que
+ * realmente autorizan esto — solo lo permiten si quien llama tiene
+ * `esAdmin: true` (ver firestore.rules).
+ */
+export async function registrarPagoAdmin(
+  vendedorId: string,
+  monto: number,
+  nota: string
+): Promise<void> {
+  await addDoc(collection(db, "pagos"), {
+    vendedorId,
+    monto,
+    nota: nota.trim(),
+    creadoEn: serverTimestamp(),
+  });
 }

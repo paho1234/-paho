@@ -300,7 +300,7 @@ export default function CarritoPage() {
               <button
                 onClick={irAPagar}
                 disabled={cargando || !metodoActivo}
-                className="w-full bg-amber text-ink font-semibold py-3 rounded-stamp hover:bg-amber-dark transition-colors disabled:opacity-60"
+                className="w-full bg-ink text-white font-semibold py-3 rounded-stamp hover:bg-ink-light transition-colors disabled:opacity-60"
               >
                 {cargando
                   ? "Redirigiendo a Mercado Pago…"

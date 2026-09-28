@@ -29,7 +29,7 @@ const config: Config = {
         mono: ["var(--font-jbmono)", "monospace"],
       },
       borderRadius: {
-        stamp: "14px",
+        stamp: "6px",
       },
     },
   },

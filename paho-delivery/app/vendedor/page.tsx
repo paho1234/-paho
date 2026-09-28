@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
 import { getProductosDeVendedor } from "@/lib/productos-vendedor";
 import { formatARS, type Producto } from "@/lib/firestore";
-import { Plus, Tag, Package, Settings } from "lucide-react";
+import { Plus, Tag, Package, Settings, Wallet } from "lucide-react";
 
 export default function VendedorPage() {
   const { user, rol, cargando } = useAuth();
@@ -48,11 +48,11 @@ export default function VendedorPage() {
     <main className="min-h-screen bg-paper-texture">
       <Header />
       <section className="mx-auto max-w-3xl px-5 py-16">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
           <h1 className="font-display text-3xl font-semibold">
             Panel de vendedor
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <Link
               href="/vendedor/perfil"
               className="flex items-center gap-1.5 border border-line text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:border-ink/40 transition-colors"
@@ -68,8 +68,15 @@ export default function VendedorPage() {
               Mis pedidos
             </Link>
             <Link
+              href="/vendedor/cuenta"
+              className="flex items-center gap-1.5 border border-line text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:border-ink/40 transition-colors"
+            >
+              <Wallet size={16} />
+              Estado de cuenta
+            </Link>
+            <Link
               href="/vendedor/productos/nuevo"
-              className="flex items-center gap-1.5 bg-amber text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:bg-amber-dark transition-colors"
+              className="flex items-center gap-1.5 bg-ink text-white font-semibold px-4 py-2 rounded-stamp text-sm hover:bg-ink-light transition-colors"
             >
               <Plus size={16} />
               Publicar producto

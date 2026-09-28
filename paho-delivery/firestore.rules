@@ -119,5 +119,17 @@ service cloud.firestore {
 
       allow update, delete: if false;
     }
+
+    // Pagos: transferencias mensuales de Todo Regalado a cada vendedor
+    // (cuenta corriente). El vendedor solo puede LEER los suyos, para
+    // ver su historial de cobros — nunca crearlos, editarlos ni
+    // borrarlos, porque eso sería poder "pagarse a sí mismo". Solo el
+    // admin, desde /admin, registra un pago nuevo.
+    match /pagos/{pagoId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.vendedorId || esAdmin());
+      allow create: if esAdmin();
+      allow update, delete: if false;
+    }
   }
 }

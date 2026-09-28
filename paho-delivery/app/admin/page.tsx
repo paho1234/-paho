@@ -13,11 +13,15 @@ import {
   getTodosLosVendedoresAdmin,
   borrarVendedorAdmin,
   subirLogoAdmin,
+  getTodosLosPagosAdmin,
+  registrarPagoAdmin,
   type VentaAdmin,
   type VendedorAdmin,
+  type PagoAdmin,
 } from "@/lib/admin";
+import { calcularResumenCuenta, COMISION_PLATAFORMA } from "@/lib/pagos";
 import { formatARS, condicionLabel, type Producto } from "@/lib/firestore";
-import { Trash2, Save, ShieldCheck, ImageIcon } from "lucide-react";
+import { Trash2, Save, ShieldCheck, ImageIcon, Wallet } from "lucide-react";
 
 const estadoVentaLabel: Record<VentaAdmin["estado"], string> = {
   pendiente_pago: "Pago pendiente",
@@ -58,6 +62,12 @@ export default function AdminPage() {
   const [vendedoresCargando, setVendedoresCargando] = useState(true);
   const [borrandoVendedor, setBorrandoVendedor] = useState<string | null>(null);
 
+  const [pagos, setPagos] = useState<PagoAdmin[]>([]);
+  const [pagosCargando, setPagosCargando] = useState(true);
+  const [montoPago, setMontoPago] = useState<Record<string, string>>({});
+  const [notaPago, setNotaPago] = useState<Record<string, string>>({});
+  const [registrandoPago, setRegistrandoPago] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,6 +97,10 @@ export default function AdminPage() {
       .then(setVendedores)
       .catch(() => setError("No pudimos cargar los vendedores."))
       .finally(() => setVendedoresCargando(false));
+    getTodosLosPagosAdmin()
+      .then(setPagos)
+      .catch(() => setError("No pudimos cargar los pagos."))
+      .finally(() => setPagosCargando(false));
   }, [user, esAdmin]);
 
   // Nombre de vendedor a partir de su id, para mostrar en la lista de
@@ -166,6 +180,32 @@ export default function AdminPage() {
       setError(`No se pudo eliminar el perfil de "${vendedor.nombreEmpresa}". Probá de nuevo.`);
     } finally {
       setBorrandoVendedor(null);
+    }
+  }
+
+  async function handleRegistrarPago(vendedor: VendedorAdmin) {
+    const montoTexto = (montoPago[vendedor.id] ?? "").replace(",", ".");
+    const monto = parseFloat(montoTexto);
+    if (!monto || monto <= 0) {
+      setError("Ingresá un monto válido para registrar el pago.");
+      return;
+    }
+    const confirmado = window.confirm(
+      `¿Confirmás que le transferiste ${formatARS(monto)} a "${vendedor.nombreEmpresa}"? Esto va a quedar registrado en su estado de cuenta.`
+    );
+    if (!confirmado) return;
+
+    setRegistrandoPago(vendedor.id);
+    try {
+      await registrarPagoAdmin(vendedor.id, monto, notaPago[vendedor.id] ?? "");
+      const nuevos = await getTodosLosPagosAdmin();
+      setPagos(nuevos);
+      setMontoPago((prev) => ({ ...prev, [vendedor.id]: "" }));
+      setNotaPago((prev) => ({ ...prev, [vendedor.id]: "" }));
+    } catch {
+      setError("No se pudo registrar el pago. Probá de nuevo.");
+    } finally {
+      setRegistrandoPago(null);
     }
   }
 
@@ -417,6 +457,90 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* --- Cuenta corriente por vendedor --- */}
+        <div className="mt-10">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+              <Wallet size={17} className="text-ink" />
+              Cuenta corriente
+            </h2>
+            <span className="font-mono text-xs text-charcoal/50">
+              comisión {(COMISION_PLATAFORMA * 100).toFixed(0)}%
+            </span>
+          </div>
+          <p className="text-charcoal/60 text-sm mb-4">
+            Lo que le corresponde a cada vendedor después de descontar la
+            comisión de la plataforma, y lo que ya se le transfirió.
+          </p>
+
+          {ventasCargando || vendedoresCargando || pagosCargando ? (
+            <p className="text-sm text-charcoal/50">Cargando…</p>
+          ) : vendedores.length === 0 ? (
+            <div className="ficha bg-white border border-line p-8 text-center text-sm text-charcoal/60">
+              Todavía no hay vendedores registrados.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {vendedores.map((v) => {
+                const ventasDeEste = ventas.filter(
+                  (venta) => venta.vendedorId === v.id && venta.estado === "pagado"
+                );
+                const pagosDeEste = pagos.filter((p) => p.vendedorId === v.id);
+                const resumen = calcularResumenCuenta(ventasDeEste, pagosDeEste);
+                return (
+                  <div key={v.id} className="ficha bg-white border border-line p-4">
+                    <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
+                      <p className="text-sm font-medium">{v.nombreEmpresa}</p>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="text-charcoal/50">
+                          Bruto {formatARS(resumen.bruto)}
+                        </span>
+                        <span className="text-charcoal/50">
+                          Neto {formatARS(resumen.neto)}
+                        </span>
+                        <span className="text-moss">
+                          Pagado {formatARS(resumen.pagado)}
+                        </span>
+                        <span className="font-display font-semibold text-ink">
+                          Pendiente {formatARS(resumen.saldoPendiente)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Monto a transferir"
+                        value={montoPago[v.id] ?? ""}
+                        onChange={(e) =>
+                          setMontoPago((prev) => ({ ...prev, [v.id]: e.target.value }))
+                        }
+                        className="w-40 rounded-stamp border border-line px-3 py-1.5 text-sm focus:outline-none focus:border-ink/40"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Nota (opcional)"
+                        value={notaPago[v.id] ?? ""}
+                        onChange={(e) =>
+                          setNotaPago((prev) => ({ ...prev, [v.id]: e.target.value }))
+                        }
+                        className="flex-1 min-w-[160px] rounded-stamp border border-line px-3 py-1.5 text-sm focus:outline-none focus:border-ink/40"
+                      />
+                      <button
+                        onClick={() => handleRegistrarPago(v)}
+                        disabled={registrandoPago === v.id}
+                        className="inline-flex items-center gap-1.5 bg-moss text-white text-xs font-medium rounded-stamp px-3 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
+                      >
+                        {registrandoPago === v.id ? "Registrando…" : "Registrar pago"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

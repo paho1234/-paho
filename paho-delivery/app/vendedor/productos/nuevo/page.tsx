@@ -325,7 +325,7 @@ export default function NuevoProductoPage() {
                       <button
                         onClick={generarConIA}
                         disabled={generando}
-                        className="flex items-center gap-2 bg-amber text-ink font-semibold px-4 py-2 rounded-stamp text-sm hover:bg-amber-dark transition-colors disabled:opacity-60"
+                        className="flex items-center gap-2 bg-ink text-white font-semibold px-4 py-2 rounded-stamp text-sm hover:bg-ink-light transition-colors disabled:opacity-60"
                       >
                         <Sparkles size={16} />
                         {generando ? "Generando…" : "Generar con IA"}

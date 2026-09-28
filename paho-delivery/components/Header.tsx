@@ -64,12 +64,12 @@ export default function Header() {
           <div className="flex items-center gap-5 shrink-0">
             {!cargando && !user && (
               <div className="hidden sm:flex items-center gap-4 text-sm text-charcoal/80">
-                <Link href="/login" className="hover:text-amber-dark transition-colors">
+                <Link href="/login" className="hover:text-ink-light transition-colors">
                   Ingresar
                 </Link>
                 <Link
                   href="/registro"
-                  className="hover:text-amber-dark transition-colors"
+                  className="hover:text-ink-light transition-colors"
                 >
                   Registrarme
                 </Link>
@@ -81,7 +81,7 @@ export default function Header() {
                 {rol === "vendedor" && (
                   <Link
                     href="/vendedor"
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Mi panel
                   </Link>
@@ -89,7 +89,7 @@ export default function Header() {
                 {rol === "comprador" && (
                   <Link
                     href="/mis-compras"
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Mis compras
                   </Link>
@@ -97,7 +97,7 @@ export default function Header() {
                 {esAdmin && (
                   <Link
                     href="/admin"
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Panel admin
                   </Link>
@@ -108,7 +108,7 @@ export default function Header() {
                 </span>
                 <button
                   onClick={() => cerrarSesion()}
-                  className="hover:text-amber-dark transition-colors"
+                  className="hover:text-ink-light transition-colors"
                 >
                   Salir
                 </button>
@@ -117,11 +117,11 @@ export default function Header() {
 
             <Link
               href="/carrito"
-              className="relative flex items-center gap-2 text-ink hover:text-amber-dark transition-colors"
+              className="relative flex items-center gap-2 text-ink hover:text-ink-light transition-colors"
             >
               <ShoppingBag size={22} />
               {mounted && cantidad > 0 && (
-                <span className="absolute -top-2 -right-2 bg-amber text-ink text-[11px] font-mono font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-ink text-white text-[11px] font-mono font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cantidad}
                 </span>
               )}
@@ -151,14 +151,14 @@ export default function Header() {
                 <Link
                   href="/login"
                   onClick={() => setMenuAbierto(false)}
-                  className="hover:text-amber-dark transition-colors"
+                  className="hover:text-ink-light transition-colors"
                 >
                   Ingresar
                 </Link>
                 <Link
                   href="/registro"
                   onClick={() => setMenuAbierto(false)}
-                  className="hover:text-amber-dark transition-colors"
+                  className="hover:text-ink-light transition-colors"
                 >
                   Registrarme
                 </Link>
@@ -175,7 +175,7 @@ export default function Header() {
                   <Link
                     href="/vendedor"
                     onClick={() => setMenuAbierto(false)}
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Mi panel
                   </Link>
@@ -184,7 +184,7 @@ export default function Header() {
                   <Link
                     href="/mis-compras"
                     onClick={() => setMenuAbierto(false)}
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Mis compras
                   </Link>
@@ -193,7 +193,7 @@ export default function Header() {
                   <Link
                     href="/admin"
                     onClick={() => setMenuAbierto(false)}
-                    className="hover:text-amber-dark transition-colors"
+                    className="hover:text-ink-light transition-colors"
                   >
                     Panel admin
                   </Link>
@@ -203,7 +203,7 @@ export default function Header() {
                     setMenuAbierto(false);
                     cerrarSesion();
                   }}
-                  className="text-left hover:text-amber-dark transition-colors"
+                  className="text-left hover:text-ink-light transition-colors"
                 >
                   Salir
                 </button>
@@ -217,7 +217,7 @@ export default function Header() {
             <Link
               key={c.slug}
               href={`/?categoria=${c.slug}`}
-              className="whitespace-nowrap text-charcoal/60 hover:text-amber-dark transition-colors"
+              className="whitespace-nowrap text-charcoal/60 hover:text-ink-light transition-colors"
             >
               {c.label}
             </Link>
