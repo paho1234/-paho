@@ -5,6 +5,7 @@ import {
   orderBy,
   doc,
   deleteDoc,
+  updateDoc,
   addDoc,
   serverTimestamp,
   type DocumentData,
@@ -137,6 +138,19 @@ function docToVendedorAdmin(id: string, data: DocumentData): VendedorAdmin {
 export async function getTodosLosVendedoresAdmin(): Promise<VendedorAdmin[]> {
   const snap = await getDocs(collection(db, "vendedores"));
   return snap.docs.map((d) => docToVendedorAdmin(d.id, d.data()));
+}
+
+/**
+ * Aprueba (o quita la aprobación de) un vendedor. Solo un admin puede
+ * cambiar `verificado` — las reglas de Firestore lo impiden para el propio
+ * vendedor. Un vendedor sin verificar puede registrarse y completar su
+ * perfil, pero no puede publicar productos hasta que se lo apruebe.
+ */
+export async function setVendedorVerificadoAdmin(
+  vendedorId: string,
+  verificado: boolean
+): Promise<void> {
+  await updateDoc(doc(db, "vendedores", vendedorId), { verificado });
 }
 
 /**

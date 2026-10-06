@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
@@ -73,6 +74,10 @@ export default function NuevoProductoPage() {
   // guarda de vuelta en su perfil para no volver a preguntarlo.
   const [costoEnvioPerfil, setCostoEnvioPerfil] = useState<number | null>(null);
   const [costoEnvioManual, setCostoEnvioManual] = useState("");
+  // Solo un vendedor aprobado por el equipo puede publicar (las reglas de
+  // Firestore también lo exigen; esto es para avisar antes de llenar todo
+  // el formulario en vano).
+  const [verificado, setVerificado] = useState(false);
 
   useEffect(() => {
     getCategorias().then((cats) => {
@@ -87,6 +92,7 @@ export default function NuevoProductoPage() {
       .then((snap) => {
         if (snap.exists()) {
           const data = snap.data();
+          setVerificado(data.verificado === true);
           if (data.direccionRetiro) {
             setPerfilRetiro({
               barrio: data.direccionRetiro.barrio,
@@ -277,6 +283,27 @@ export default function NuevoProductoPage() {
         <p className="text-center text-sm text-charcoal/50 py-24">
           Cargando…
         </p>
+      </main>
+    );
+  }
+
+  if (!cargandoPerfil && !verificado) {
+    return (
+      <main className="min-h-screen bg-paper-texture">
+        <Header />
+        <section className="mx-auto max-w-md px-5 py-16 text-center">
+          <h1 className="font-display text-2xl font-semibold mb-3">
+            Tu cuenta está en revisión
+          </h1>
+          <p className="text-charcoal/70 mb-6 text-sm">
+            Todavía no podés publicar: nuestro equipo está validando tus
+            datos de facturación. Apenas te aprobemos vas a poder subir tus
+            productos.
+          </p>
+          <Link href="/vendedor" className="text-ink underline font-medium text-sm">
+            ← Volver a mi panel
+          </Link>
+        </section>
       </main>
     );
   }

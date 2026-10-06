@@ -75,4 +75,22 @@ export async function enviarMensaje(
     texto: textoLimpio,
     creadoEn: serverTimestamp(),
   });
+
+  // Aviso por email a la otra parte — es de mejor esfuerzo: si esto
+  // falla (red, servidor caído, etc.) el mensaje ya se guardó bien
+  // arriba, así que nunca debe hacer parecer que el envío falló.
+  try {
+    await fetch("/api/mensajes/notificar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ordenId,
+        autorId,
+        autorRol,
+        texto: textoLimpio,
+      }),
+    });
+  } catch {
+    // Silencioso a propósito.
+  }
 }

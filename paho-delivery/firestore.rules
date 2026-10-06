@@ -20,8 +20,13 @@ service cloud.firestore {
     // vendedor. Las categorías las administra PAHO (Admin SDK / consola).
     match /productos/{productoId} {
       allow read: if true;
+      // Para publicar hay que ser un vendedor APROBADO por el equipo
+      // (vendedores/{uid}.verificado == true, que solo un admin puede
+      // activar). Si el perfil no existe o no está verificado, get()
+      // falla o da false y la creación se rechaza.
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.vendedorId;
+        && request.auth.uid == request.resource.data.vendedorId
+        && get(/databases/$(database)/documents/vendedores/$(request.auth.uid)).data.verificado == true;
       allow update: if request.auth != null
         && request.auth.uid == resource.data.vendedorId;
       allow delete: if request.auth != null
@@ -45,16 +50,38 @@ service cloud.firestore {
     // facturación), así que NO es de lectura pública. El nombre que se ve
     // en el catálogo ya está desnormalizado en cada producto. Solo el
     // propio vendedor puede leer y escribir su perfil.
+    //
+    // `verificado` y `mpSellerId` los maneja solo el equipo: un vendedor
+    // nuevo se crea siempre con verificado == false, y no puede cambiarse
+    // a sí mismo esos dos campos (si no, se auto-aprobaría).
     match /vendedores/{vendedorId} {
-      allow read, create, update: if request.auth != null
+      allow read: if request.auth != null
         && (request.auth.uid == vendedorId || esAdmin());
+      allow create: if request.auth != null
+        && ((request.auth.uid == vendedorId
+             && request.resource.data.verificado == false
+             && (!('mpSellerId' in request.resource.data)
+                 || request.resource.data.mpSellerId == null))
+            || esAdmin());
+      allow update: if request.auth != null
+        && ((request.auth.uid == vendedorId
+             && !request.resource.data.diff(resource.data).affectedKeys()
+                  .hasAny(['verificado', 'mpSellerId']))
+            || esAdmin());
       allow delete: if esAdmin();
     }
 
     // Perfil general de usuario (comprador o vendedor). Cada usuario solo
-    // puede leer/escribir su propio documento.
+    // puede leer/escribir su propio documento — pero NO puede darse a sí
+    // mismo `esAdmin`: ese campo solo se carga a mano en la consola de
+    // Firebase. Sin esta restricción, cualquier cuenta registrada podría
+    // escribirse esAdmin: true y operar como admin.
     match /usuarios/{userId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && !('esAdmin' in request.resource.data);
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['esAdmin']);
       allow delete: if false;
     }
 

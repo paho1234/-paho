@@ -12,6 +12,7 @@ import {
   getTodasLasVentasAdmin,
   getTodosLosVendedoresAdmin,
   borrarVendedorAdmin,
+  setVendedorVerificadoAdmin,
   subirLogoAdmin,
   getTodosLosPagosAdmin,
   registrarPagoAdmin,
@@ -61,6 +62,7 @@ export default function AdminPage() {
   const [vendedores, setVendedores] = useState<VendedorAdmin[]>([]);
   const [vendedoresCargando, setVendedoresCargando] = useState(true);
   const [borrandoVendedor, setBorrandoVendedor] = useState<string | null>(null);
+  const [verificandoVendedor, setVerificandoVendedor] = useState<string | null>(null);
 
   const [pagos, setPagos] = useState<PagoAdmin[]>([]);
   const [pagosCargando, setPagosCargando] = useState(true);
@@ -180,6 +182,30 @@ export default function AdminPage() {
       setError(`No se pudo eliminar el perfil de "${vendedor.nombreEmpresa}". Probá de nuevo.`);
     } finally {
       setBorrandoVendedor(null);
+    }
+  }
+
+  async function handleVerificarVendedor(vendedor: VendedorAdmin) {
+    const nuevoEstado = !vendedor.verificado;
+    const confirmado = window.confirm(
+      nuevoEstado
+        ? `¿Aprobar a "${vendedor.nombreEmpresa}"? Va a poder publicar productos.`
+        : `¿Quitarle la aprobación a "${vendedor.nombreEmpresa}"? Deja de poder publicar productos nuevos (los que ya publicó siguen visibles).`
+    );
+    if (!confirmado) return;
+
+    setVerificandoVendedor(vendedor.id);
+    try {
+      await setVendedorVerificadoAdmin(vendedor.id, nuevoEstado);
+      setVendedores((prev) =>
+        prev.map((v) =>
+          v.id === vendedor.id ? { ...v, verificado: nuevoEstado } : v
+        )
+      );
+    } catch {
+      setError(`No se pudo actualizar a "${vendedor.nombreEmpresa}". Probá de nuevo.`);
+    } finally {
+      setVerificandoVendedor(null);
     }
   }
 
@@ -588,14 +614,32 @@ export default function AdminPage() {
                       publicaciones
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleBorrarVendedor(v)}
-                    disabled={borrandoVendedor === v.id}
-                    className="inline-flex items-center gap-1.5 text-xs text-clay border border-clay/40 rounded-stamp px-2.5 py-1.5 hover:bg-clay hover:text-white transition-colors disabled:opacity-60 shrink-0"
-                  >
-                    <Trash2 size={13} />
-                    {borrandoVendedor === v.id ? "Eliminando…" : "Eliminar perfil"}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    <button
+                      onClick={() => handleVerificarVendedor(v)}
+                      disabled={verificandoVendedor === v.id}
+                      className={
+                        v.verificado
+                          ? "inline-flex items-center gap-1.5 text-xs text-charcoal/70 border border-line rounded-stamp px-2.5 py-1.5 hover:border-ink/40 transition-colors disabled:opacity-60"
+                          : "inline-flex items-center gap-1.5 text-xs bg-moss text-white font-medium rounded-stamp px-2.5 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
+                      }
+                    >
+                      <ShieldCheck size={13} />
+                      {verificandoVendedor === v.id
+                        ? "Guardando…"
+                        : v.verificado
+                        ? "Quitar aprobación"
+                        : "Aprobar vendedor"}
+                    </button>
+                    <button
+                      onClick={() => handleBorrarVendedor(v)}
+                      disabled={borrandoVendedor === v.id}
+                      className="inline-flex items-center gap-1.5 text-xs text-clay border border-clay/40 rounded-stamp px-2.5 py-1.5 hover:bg-clay hover:text-white transition-colors disabled:opacity-60"
+                    >
+                      <Trash2 size={13} />
+                      {borrandoVendedor === v.id ? "Eliminando…" : "Eliminar perfil"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

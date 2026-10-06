@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
 import { getProductosDeVendedor } from "@/lib/productos-vendedor";
+import { getPerfilVendedor } from "@/lib/auth";
 import { formatARS, type Producto } from "@/lib/firestore";
 import { Plus, Tag, Package, Settings, Wallet } from "lucide-react";
 
@@ -14,6 +15,16 @@ export default function VendedorPage() {
   const router = useRouter();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
+  // null = todavía cargando el perfil; no mostramos el aviso hasta saberlo,
+  // para que un vendedor ya aprobado no vea parpadear el cartel.
+  const [verificado, setVerificado] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user || rol !== "vendedor") return;
+    getPerfilVendedor(user.uid)
+      .then((p) => setVerificado(p?.verificado ?? false))
+      .catch(() => setVerificado(null));
+  }, [user, rol]);
 
   useEffect(() => {
     if (cargando) return;
@@ -83,11 +94,20 @@ export default function VendedorPage() {
             </Link>
           </div>
         </div>
-        <p className="text-charcoal/60 text-sm mb-10">
-          Hola, {user.displayName}. Nuestro equipo valida tus datos de
-          facturación antes de que tus publicaciones queden visibles para
-          todos.
+        <p className="text-charcoal/60 text-sm mb-6">
+          Hola, {user.displayName}.
         </p>
+
+        {verificado === false && (
+          <div className="ficha bg-white border border-amber-dark/40 p-4 mb-8 text-sm">
+            <p className="font-medium mb-1">Tu cuenta está en revisión</p>
+            <p className="text-charcoal/70">
+              Nuestro equipo está validando tus datos de facturación. Apenas
+              te aprobemos vas a poder publicar productos. Mientras tanto,
+              podés completar tu perfil.
+            </p>
+          </div>
+        )}
 
         <h2 className="font-display text-xl font-semibold mb-4">
           Mis productos

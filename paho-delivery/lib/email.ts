@@ -21,6 +21,17 @@ const resend = process.env.RESEND_API_KEY
 const FROM = process.env.EMAIL_FROM ?? "Todo Regalado <onboarding@resend.dev>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://todoregalado.com";
 
+// El texto del mensaje lo escribe cualquier usuario, así que antes de
+// insertarlo en el HTML del mail hay que escapar los caracteres que
+// podrían romper el markup o inyectar HTML propio.
+function escapeHtml(texto: string): string {
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function listaItemsHtml(items: ItemOrden[]) {
   return items
     .map(
@@ -76,6 +87,42 @@ export async function notificarVentaAlVendedor(datos: {
             : "Es con retiro en el local — el comprador va a pasar a buscarlo."
         }</p>
         <p><a href="${SITE_URL}/vendedor/pedidos" style="color: #1B2A3D;">Ver el pedido completo →</a></p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Aviso de que llegó un mensaje nuevo en el chat de un pedido. `rolRemitente`
+ * es quién escribió (para el asunto/cuerpo, desde el punto de vista de
+ * quien LO RECIBE): si escribió el vendedor, el aviso es para el
+ * comprador, y viceversa. El link manda a la página de mensajes que le
+ * corresponde a cada rol (son rutas distintas — ver app/mis-compras y
+ * app/vendedor/pedidos).
+ */
+export async function notificarMensajeNuevo(datos: {
+  email: string;
+  ordenId: string;
+  rolRemitente: "comprador" | "vendedor";
+  texto: string;
+}) {
+  const esParaVendedor = datos.rolRemitente === "comprador";
+  const url = esParaVendedor
+    ? `${SITE_URL}/vendedor/pedidos/${datos.ordenId}/mensajes`
+    : `${SITE_URL}/mis-compras/${datos.ordenId}/mensajes`;
+  const quienEscribe = esParaVendedor ? "el comprador" : "el vendedor";
+
+  await enviar({
+    to: datos.email,
+    subject: "Tenés un mensaje nuevo en Todo Regalado 💬",
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
+        <p style="font-size: 22px; font-style: italic; font-weight: 600; color: #1B2A3D;">Todo Regalado</p>
+        <p>Te escribió ${quienEscribe} sobre un pedido:</p>
+        <p style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; color: #333;">
+          "${escapeHtml(datos.texto.length > 200 ? datos.texto.slice(0, 200) + "…" : datos.texto)}"
+        </p>
+        <p><a href="${url}" style="color: #1B2A3D;">Responder →</a></p>
       </div>
     `,
   });

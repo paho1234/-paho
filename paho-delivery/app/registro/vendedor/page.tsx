@@ -23,7 +23,7 @@ const opcionesIVA: { value: CondicionIVA; label: string }[] = [
 // vendedores. Mientras esté en `false`, esta página muestra un aviso
 // en vez del formulario — el formulario en sí queda intacto más abajo,
 // no hay que reconstruir nada para reabrirlo.
-const REGISTRO_VENDEDOR_ABIERTO = false;
+const REGISTRO_VENDEDOR_ABIERTO = true;
 
 export default function RegistroVendedorPage() {
   const router = useRouter();

@@ -31,19 +31,17 @@ export default function RegistroPage() {
 
           <Link
             href="/registro/vendedor"
-            className="ficha bg-white border border-line hover:border-ink/40 transition-colors p-8 text-center relative"
+            className="ficha bg-white border border-line hover:border-ink/40 transition-colors p-8 text-center"
           >
-            <span className="absolute top-3 right-3 text-[10px] font-mono uppercase text-charcoal/50 bg-charcoal/5 px-2 py-1 rounded-sm">
-              Muy pronto
-            </span>
-            <span className="stamp w-12 h-12 mx-auto mb-4 text-lg text-charcoal/40 border-charcoal/30">
+            <span className="stamp w-12 h-12 mx-auto mb-4 text-lg text-ink border-ink">
               🏪
             </span>
             <h2 className="font-display text-xl font-semibold mb-2">
               Quiero vender
             </h2>
             <p className="text-sm text-charcoal/60">
-              Registrá tu empresa, cargá tus datos de facturación y publicá.
+              Registrá tu empresa y cargá tus datos de facturación. Una vez
+              que validemos tu cuenta, ya podés publicar.
             </p>
           </Link>
         </div>
