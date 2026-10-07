@@ -13,6 +13,7 @@ import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthProvider";
+import BotonWhatsApp from "@/components/BotonWhatsApp";
 
 export const metadata: Metadata = {
   title: "Todo Regalado — Outlet de devoluciones",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="es-AR">
       <body className="font-body bg-paper text-charcoal antialiased">
         <AuthProvider>{children}</AuthProvider>
+        <BotonWhatsApp />
       </body>
     </html>
   );
