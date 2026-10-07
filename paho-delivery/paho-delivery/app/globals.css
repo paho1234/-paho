@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Baloo 2", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #EBEBEB;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Fondo gris clarito estilo Mercado Libre — separa visualmente las
+   tarjetas blancas del fondo, en vez del blanco liso plano anterior. */
+.bg-paper-texture {
+  background-color: #EBEBEB;
+}
+
+/* Insignia circular — sin rotación, look más limpio que la versión "sello de feria" */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* Tarjeta estilo Mercado Libre: esquinas más chatas que antes, borde
+   fino y sombra apenas insinuada que se acentúa al pasar el mouse —
+   así el fondo gris hace que cada tarjeta blanca resalte sola. */
+.ficha {
+  position: relative;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.15s ease;
+}
+
+.ficha:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.divider-torn {
+  height: 1px;
+  background-color: #EAEAEA;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
