@@ -10,6 +10,7 @@ import {
   type PedidoComprador,
 } from "@/lib/pedidos-comprador";
 import { formatARS } from "@/lib/firestore";
+import { pedidosConMensajeNuevo } from "@/lib/mensajes";
 import { CheckCircle2, Clock, Truck, MapPin, Mail } from "lucide-react";
 
 const estadoLabel: Record<PedidoComprador["estado"], string> = {
@@ -30,6 +31,7 @@ export default function MisComprasPage() {
   const [pedidos, setPedidos] = useState<PedidoComprador[]>([]);
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [conMensajeNuevo, setConMensajeNuevo] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (cargando) return;
@@ -41,7 +43,17 @@ export default function MisComprasPage() {
   useEffect(() => {
     if (!user) return;
     getPedidosDeComprador(user.uid)
-      .then((todos) => setPedidos(todos.filter((p) => p.estado === "pagado")))
+      .then((todos) => {
+        const pagados = todos.filter((p) => p.estado === "pagado");
+        setPedidos(pagados);
+        // Aviso de mensajes nuevos: no bloquea la lista, aparece cuando llega.
+        pedidosConMensajeNuevo(
+          user.uid,
+          pagados.map((p) => p.id)
+        )
+          .then(setConMensajeNuevo)
+          .catch(() => {});
+      })
       .catch(() => setError("No pudimos cargar tus compras."))
       .finally(() => setCargandoPedidos(false));
   }, [user]);
@@ -160,10 +172,19 @@ export default function MisComprasPage() {
                   {p.estado === "pagado" && (
                     <Link
                       href={`/mis-compras/${p.id}/mensajes`}
-                      className="inline-flex items-center gap-1.5 text-xs text-ink border border-line rounded-stamp px-2.5 py-1.5 hover:border-ink/40 transition-colors"
+                      className={`inline-flex items-center gap-1.5 text-xs text-ink border rounded-stamp px-2.5 py-1.5 transition-colors ${
+                        conMensajeNuevo.has(p.id)
+                          ? "border-clay font-semibold hover:border-clay"
+                          : "border-line hover:border-ink/40"
+                      }`}
                     >
                       <Mail size={13} />
                       Mensajes
+                      {conMensajeNuevo.has(p.id) && (
+                        <span className="bg-clay text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none">
+                          Nuevo
+                        </span>
+                      )}
                     </Link>
                   )}
                 </div>

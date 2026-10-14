@@ -85,6 +85,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Marca de "último mensaje leído" por pedido (para el aviso "Nuevo" en
+    // Mis compras / Mis pedidos). Cada usuario lee y escribe solo las suyas.
+    match /usuarios/{userId}/lecturas/{ordenId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Órdenes: se crean solo desde el servidor (API route con Admin SDK,
     // que arma el objeto `facturacion` con el mínimo indispensable —
     // nombre, tipo/número de documento, condición IVA — nunca el email de

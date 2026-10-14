@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthProvider";
 import { getPedidosDeVendedor, confirmarEntrega, type PedidoVendedor } from "@/lib/pedidos-vendedor";
 import { formatARS } from "@/lib/firestore";
+import { pedidosConMensajeNuevo } from "@/lib/mensajes";
 import { Tag, CheckCircle2, Truck, MessageCircle, Mail } from "lucide-react";
 
 /**
@@ -44,6 +45,7 @@ export default function PedidosPage() {
   const [cargandoPedidos, setCargandoPedidos] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [conMensajeNuevo, setConMensajeNuevo] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (cargando) return;
@@ -59,7 +61,17 @@ export default function PedidosPage() {
   useEffect(() => {
     if (!user || rol !== "vendedor") return;
     getPedidosDeVendedor(user.uid)
-      .then((todos) => setPedidos(todos.filter((p) => p.estado === "pagado")))
+      .then((todos) => {
+        const pagados = todos.filter((p) => p.estado === "pagado");
+        setPedidos(pagados);
+        // Aviso de mensajes nuevos: no bloquea la lista, aparece cuando llega.
+        pedidosConMensajeNuevo(
+          user.uid,
+          pagados.map((p) => p.id)
+        )
+          .then(setConMensajeNuevo)
+          .catch(() => {});
+      })
       .catch(() => setError("No pudimos cargar tus pedidos."))
       .finally(() => setCargandoPedidos(false));
   }, [user, rol]);
@@ -175,10 +187,19 @@ export default function PedidosPage() {
                 </Link>
                 <Link
                   href={`/vendedor/pedidos/${p.id}/mensajes`}
-                  className="mt-3 ml-2 inline-flex items-center gap-1.5 text-xs text-ink border border-line rounded-stamp px-2.5 py-1.5 hover:border-ink/40 transition-colors"
+                  className={`mt-3 ml-2 inline-flex items-center gap-1.5 text-xs text-ink border rounded-stamp px-2.5 py-1.5 transition-colors ${
+                    conMensajeNuevo.has(p.id)
+                      ? "border-clay font-semibold hover:border-clay"
+                      : "border-line hover:border-ink/40"
+                  }`}
                 >
                   <Mail size={13} />
                   Mensajes
+                  {conMensajeNuevo.has(p.id) && (
+                    <span className="bg-clay text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none">
+                      Nuevo
+                    </span>
+                  )}
                 </Link>
 
                 {p.entrega === "entregado" ? (

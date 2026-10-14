@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
-import { escucharMensajes, enviarMensaje, type Mensaje, type AutorRol } from "@/lib/mensajes";
+import {
+  escucharMensajes,
+  enviarMensaje,
+  marcarComoLeido,
+  type Mensaje,
+  type AutorRol,
+} from "@/lib/mensajes";
 
 type Props = {
   ordenId: string;
@@ -43,6 +49,13 @@ export default function ChatPedido({ ordenId, usuarioId, miRol }: Props) {
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes.length]);
+
+  // Mientras el chat está abierto, todo lo que llega se da por leído: se
+  // marca al abrir y de nuevo cada vez que cambia la cantidad de mensajes.
+  useEffect(() => {
+    if (cargando) return;
+    marcarComoLeido(usuarioId, ordenId).catch(() => {});
+  }, [cargando, mensajes.length, usuarioId, ordenId]);
 
   async function handleEnviar(e: React.FormEvent) {
     e.preventDefault();
