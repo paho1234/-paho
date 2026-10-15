@@ -32,21 +32,107 @@ function escapeHtml(texto: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function listaItemsHtml(items: ItemOrden[]) {
-  return items
-    .map(
-      (i) =>
-        `<li>${i.titulo} × ${i.cantidad}</li>`
-    )
-    .join("");
-}
-
 function formatARS(valor: number) {
   return valor.toLocaleString("es-AR", {
     style: "currency",
     currency: "ARS",
     maximumFractionDigits: 0,
   });
+}
+
+// ---------------------------------------------------------------------
+// Diseño de los mails. Todos comparten el mismo marco (layout): encabezado
+// con la marca, tarjeta blanca, botón y pie. Se usa HTML con tablas y
+// estilos en línea porque es lo único que renderizan bien Outlook, Gmail
+// y los clientes móviles (no soportan CSS externo ni flexbox).
+// ---------------------------------------------------------------------
+const COLOR_MARCA = "#5C1417"; // bordó de la marca
+const COLOR_ACENTO = "#E33A2E";
+const COLOR_FONDO = "#F6F3EF";
+const COLOR_TEXTO = "#1A1A1A";
+const COLOR_SUAVE = "#6B6B6B";
+const FUENTE = "Helvetica, Arial, sans-serif";
+
+function boton(texto: string, url: string) {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px 0 4px;">
+      <tr>
+        <td style="background: ${COLOR_MARCA}; border-radius: 8px;">
+          <a href="${url}" style="display: inline-block; padding: 14px 28px; font-family: ${FUENTE}; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none;">${texto}</a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function layout(params: {
+  preheader: string;
+  titulo: string;
+  contenido: string;
+  nota?: string;
+}) {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${params.titulo}</title>
+</head>
+<body style="margin: 0; padding: 0; background: ${COLOR_FONDO};">
+  <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: transparent;">${params.preheader}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${COLOR_FONDO};">
+    <tr>
+      <td align="center" style="padding: 28px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+          <tr>
+            <td align="center" style="background: #060201; border-radius: 12px 12px 0 0; padding: 22px 16px 14px;">
+              <a href="${SITE_URL}" style="text-decoration: none;">
+                <img src="${SITE_URL}/logo-email.png" width="200" alt="Todo Regalado" style="display: block; width: 200px; max-width: 100%; height: auto; border: 0; font-family: Georgia, serif; font-size: 24px; font-style: italic; font-weight: bold; color: #ffffff;">
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="background: #ffffff; border-radius: 0 0 12px 12px; border-top: 4px solid ${COLOR_ACENTO}; padding: 32px 28px; font-family: ${FUENTE}; color: ${COLOR_TEXTO}; font-size: 15px; line-height: 1.55;">
+              <h1 style="margin: 0 0 14px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; line-height: 1.25; color: ${COLOR_MARCA};">${params.titulo}</h1>
+              ${params.contenido}
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 20px 16px 0; font-family: ${FUENTE}; font-size: 12px; line-height: 1.5; color: ${COLOR_SUAVE};">
+              ${params.nota ? `${params.nota}<br><br>` : ""}
+              Este aviso lo enviamos automáticamente desde <a href="${SITE_URL}" style="color: ${COLOR_SUAVE};">todoregalado.com</a>.<br>
+              Si no esperabas este mail, podés ignorarlo.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function tablaItems(items: ItemOrden[], total: number) {
+  const filas = items
+    .map(
+      (i) => `
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #EAEAEA; font-size: 14px;">${escapeHtml(i.titulo)}</td>
+          <td align="right" style="padding: 10px 0 10px 12px; border-bottom: 1px solid #EAEAEA; font-size: 14px; color: ${COLOR_SUAVE}; white-space: nowrap;">× ${i.cantidad}</td>
+        </tr>`
+    )
+    .join("");
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0 0;">
+      ${filas}
+      <tr>
+        <td style="padding: 14px 0 0; font-size: 14px; font-weight: bold;">Total</td>
+        <td align="right" style="padding: 14px 0 0; font-size: 18px; font-weight: bold; color: ${COLOR_MARCA}; white-space: nowrap;">${formatARS(total)}</td>
+      </tr>
+    </table>`;
+}
+
+function cajaAviso(texto: string) {
+  return `<p style="margin: 20px 0 0; padding: 12px 14px; background: #FBF3E4; border-left: 3px solid #E8A33D; border-radius: 4px; font-size: 14px;">${texto}</p>`;
 }
 
 async function enviar(params: { to: string; subject: string; html: string }) {
@@ -75,20 +161,20 @@ export async function notificarVentaAlVendedor(datos: {
   await enviar({
     to: datos.emailVendedor,
     subject: "¡Vendiste algo en Todo Regalado! 🎉",
-    html: `
-      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
-        <p style="font-size: 22px; font-style: italic; font-weight: 600; color: #1B2A3D;">Todo Regalado</p>
-        <p>¡Tenés una venta nueva! Esto es lo que se vendió:</p>
-        <ul>${listaItemsHtml(datos.items)}</ul>
-        <p><strong>Total: ${formatARS(datos.total)}</strong></p>
-        <p>${
+    html: layout({
+      preheader: `Nueva venta por ${formatARS(datos.total)}. Entrá a ver el pedido.`,
+      titulo: "¡Tenés una venta nueva! 🎉",
+      contenido: `
+        <p style="margin: 0;">Ya confirmamos el pago. Esto es lo que se vendió:</p>
+        ${tablaItems(datos.items, datos.total)}
+        ${cajaAviso(
           datos.envio.metodo === "domicilio"
-            ? "Es con envío a domicilio — coordiná el despacho."
-            : "Es con retiro en el local — el comprador va a pasar a buscarlo."
-        }</p>
-        <p><a href="${SITE_URL}/vendedor/pedidos" style="color: #1B2A3D;">Ver el pedido completo →</a></p>
-      </div>
-    `,
+            ? "<strong>Envío a domicilio:</strong> coordiná el despacho y marcá el pedido como despachado desde tu panel."
+            : "<strong>Retiro en el local:</strong> el comprador va a pasar a buscarlo. Marcalo como entregado cuando lo retire."
+        )}
+        ${boton("Ver el pedido", `${SITE_URL}/vendedor/pedidos`)}
+      `,
+    }),
   });
 }
 
@@ -110,21 +196,23 @@ export async function notificarMensajeNuevo(datos: {
   const url = esParaVendedor
     ? `${SITE_URL}/vendedor/pedidos/${datos.ordenId}/mensajes`
     : `${SITE_URL}/mis-compras/${datos.ordenId}/mensajes`;
-  const quienEscribe = esParaVendedor ? "el comprador" : "el vendedor";
+  const quienEscribe = esParaVendedor ? "El comprador" : "El vendedor";
+  const recorte =
+    datos.texto.length > 200 ? datos.texto.slice(0, 200) + "…" : datos.texto;
 
   await enviar({
     to: datos.email,
     subject: "Tenés un mensaje nuevo en Todo Regalado 💬",
-    html: `
-      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
-        <p style="font-size: 22px; font-style: italic; font-weight: 600; color: #1B2A3D;">Todo Regalado</p>
-        <p>Te escribió ${quienEscribe} sobre un pedido:</p>
-        <p style="background: #f5f5f5; border-radius: 8px; padding: 12px 16px; color: #333;">
-          "${escapeHtml(datos.texto.length > 200 ? datos.texto.slice(0, 200) + "…" : datos.texto)}"
-        </p>
-        <p><a href="${url}" style="color: #1B2A3D;">Responder →</a></p>
-      </div>
-    `,
+    html: layout({
+      preheader: `${quienEscribe} te escribió sobre un pedido.`,
+      titulo: "Tenés un mensaje nuevo 💬",
+      contenido: `
+        <p style="margin: 0;">${quienEscribe} te escribió sobre un pedido:</p>
+        <p style="margin: 16px 0 0; padding: 14px 16px; background: #F6F3EF; border-left: 3px solid ${COLOR_ACENTO}; border-radius: 4px; font-size: 15px; color: #333; white-space: pre-wrap;">${escapeHtml(recorte)}</p>
+        ${boton("Responder", url)}
+      `,
+      nota: "💡 Si este mail te llegó a la carpeta de spam, marcalo como “No es spam” para recibir los próximos en tu bandeja principal.",
+    }),
   });
 }
 
@@ -137,19 +225,20 @@ export async function notificarCompraAlComprador(datos: {
   await enviar({
     to: datos.emailComprador,
     subject: "Tu compra en Todo Regalado está confirmada ✅",
-    html: `
-      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
-        <p style="font-size: 22px; font-style: italic; font-weight: 600; color: #1B2A3D;">Todo Regalado</p>
-        <p>¡Gracias por tu compra! Ya confirmamos tu pago.</p>
-        <ul>${listaItemsHtml(datos.items)}</ul>
-        <p><strong>Total: ${formatARS(datos.total)}</strong></p>
-        <p>${
+    html: layout({
+      preheader: `Confirmamos tu pago de ${formatARS(datos.total)}.`,
+      titulo: "¡Gracias por tu compra! ✅",
+      contenido: `
+        <p style="margin: 0;">Ya confirmamos tu pago. Este es el resumen:</p>
+        ${tablaItems(datos.items, datos.total)}
+        ${cajaAviso(
           datos.envio.metodo === "domicilio"
-            ? "El vendedor te lo va a enviar a domicilio."
-            : "Vas a poder retirarlo en el local acordado."
-        }</p>
-        <p><a href="${SITE_URL}/mis-compras" style="color: #1B2A3D;">Ver el estado de tu compra →</a></p>
-      </div>
-    `,
+            ? "<strong>Envío a domicilio:</strong> el vendedor te lo va a enviar. Podés escribirle desde tu compra."
+            : "<strong>Retiro en el local:</strong> vas a poder retirarlo en el local acordado. La dirección exacta la ves en tu compra."
+        )}
+        ${boton("Ver mi compra", `${SITE_URL}/mis-compras`)}
+      `,
+      nota: "💡 Si este mail te llegó a spam, marcalo como “No es spam” para recibir los avisos de tu pedido.",
+    }),
   });
 }

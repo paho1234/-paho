@@ -98,7 +98,11 @@ export default async function ProductoPage({
 
           <p className="text-sm text-charcoal/70 mb-4">
             {producto.stock > 0
-              ? `Stock disponible: ${producto.stock} unidad${producto.stock === 1 ? "" : "es"}`
+              ? producto.stock === 1
+                ? "¡Última unidad disponible!"
+                : producto.stock <= 5
+                  ? "Quedan pocas unidades"
+                  : "Disponible"
               : "Sin stock disponible por ahora"}
           </p>
 

@@ -31,6 +31,7 @@ function docToProductoAdmin(id: string, data: DocumentData): Producto {
     imagenColor: data.imagenColor ?? "#1B2A3D",
     imagenes: data.imagenes ?? [],
     activo: data.activo ?? true,
+    creadoEnMs: data.creadoEn?.toMillis ? data.creadoEn.toMillis() : null,
     envio: data.envio ?? {
       retiro: true,
       envioDomicilio: false,

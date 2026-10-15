@@ -21,7 +21,28 @@ function textoEntrega(producto: Producto): string {
   return partes.join(" · ") || "Consultar entrega";
 }
 
+const DOS_DIAS_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * Etiqueta de urgencia de la ficha. Todo sale de datos reales: el stock
+ * que declaró el vendedor y la fecha de publicación. Nada inventado.
+ */
+function etiquetaUrgencia(
+  producto: Producto
+): { texto: string; clase: string } | null {
+  if (producto.stock === 1)
+    return { texto: "¡Última!", clase: "bg-clay text-white animate-pulse" };
+  if (producto.stock <= 5)
+    return { texto: "Quedan pocas", clase: "bg-clay text-white" };
+  if (producto.creadoEnMs && Date.now() - producto.creadoEnMs < DOS_DIAS_MS)
+    return { texto: "Recién llegó", clase: "bg-ink text-white" };
+  if (producto.stock <= 10)
+    return { texto: "Últimas unidades", clase: "bg-white/90 text-clay" };
+  return null;
+}
+
 export default function ProductCard({ producto }: { producto: Producto }) {
+  const etiqueta = etiquetaUrgencia(producto);
   const inicial = producto.categoriaLabel.slice(0, 2).toUpperCase();
   const descuento = descuentoPorcentaje(producto);
 
@@ -43,9 +64,11 @@ export default function ProductCard({ producto }: { producto: Producto }) {
             -{descuento}%
           </span>
         )}
-        {producto.stock <= 10 && (
-          <span className="absolute top-3 left-3 z-10 text-[10px] font-mono uppercase tracking-wide text-clay bg-white/90 px-2 py-0.5 rounded-sm">
-            Últimas {producto.stock}
+        {etiqueta && (
+          <span
+            className={`absolute top-3 left-3 z-10 text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded-sm ${etiqueta.clase}`}
+          >
+            {etiqueta.texto}
           </span>
         )}
 

@@ -3,6 +3,9 @@ import ComoFunciona from "@/components/ComoFunciona";
 import ProductCard from "@/components/ProductCard";
 import ZonaCobertura from "@/components/ZonaCobertura";
 import BannerPromo from "@/components/BannerPromo";
+import HeroUrgencia from "@/components/HeroUrgencia";
+import CintaUrgencia from "@/components/CintaUrgencia";
+import SeccionProductosHorizontal from "@/components/SeccionProductosHorizontal";
 import { getProductos, getCategorias } from "@/lib/firestore";
 import { getBannerTexto } from "@/lib/config";
 
@@ -22,6 +25,15 @@ export default async function Home({
     getBannerTexto(),
   ]);
 
+  // Números reales del catálogo para la portada y la sección de urgencia.
+  const ahora = Date.now();
+  const nuevas48h = lista.filter(
+    (p) => p.creadoEnMs && ahora - p.creadoEnMs < 48 * 60 * 60 * 1000
+  ).length;
+  const ultimasUnidades = categoriaActiva
+    ? []
+    : lista.filter((p) => p.stock <= 3).slice(0, 12);
+
   const nombreCategoria = categorias.find(
     (c) => c.slug === categoriaActiva
   )?.label;
@@ -30,25 +42,22 @@ export default async function Home({
     <main className="min-h-screen bg-paper-texture">
       <Header />
       <BannerPromo texto={bannerTexto} />
+      <HeroUrgencia
+        publicaciones={lista.length}
+        nuevas48h={nuevas48h}
+      />
+      <CintaUrgencia />
       <ZonaCobertura />
 
-      <section className="border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 py-14 md:py-20 flex flex-col items-center text-center">
-          <h1 className="font-display font-semibold text-3xl md:text-4xl text-ink">
-            Devoluciones de e-commerce a precios de locos
-          </h1>
-          <p className="mt-3 max-w-lg text-charcoal/70 text-base md:text-lg">
-            Devoluciones, reacondicionados y liquidaciones de marcas reales,
-            hasta 70% menos. Cada producto con su condición declarada, sin
-            sorpresas.
-          </p>
-          <ComoFunciona />
-        </div>
-      </section>
+      <SeccionProductosHorizontal
+        titulo="Últimas unidades — no se reponen"
+        icono="!"
+        productos={ultimasUnidades}
+      />
 
       <div className="divider-torn" />
 
-      <section className="mx-auto max-w-6xl px-5 py-10">
+      <section id="catalogo" className="mx-auto max-w-6xl px-5 py-10 scroll-mt-4">
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="font-display text-2xl font-semibold">
             {nombreCategoria ?? "Recién llegados"}
@@ -69,6 +78,15 @@ export default async function Home({
             Todavía no hay publicaciones en esta categoría.
           </p>
         )}
+      </section>
+
+      <section className="border-t border-line">
+        <div className="mx-auto max-w-6xl px-5 py-12 text-center">
+          <h2 className="font-display text-2xl font-semibold text-ink">
+            Así de rápido es comprar
+          </h2>
+          <ComoFunciona />
+        </div>
       </section>
 
       <footer className="border-t border-line mt-10 py-8">

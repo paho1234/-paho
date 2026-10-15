@@ -62,3 +62,18 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Cinta de avisos del home (ticker) — scroll continuo, se pausa al pasar el mouse */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 28s linear infinite;
+}
+.ticker:hover .ticker-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+}

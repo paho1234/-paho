@@ -73,6 +73,8 @@ export type Producto = {
   imagenes?: string[];
   activo: boolean;
   envio: Envio;
+  /** Momento de publicación en ms (null si el doc no lo tiene). */
+  creadoEnMs: number | null;
 };
 
 export type Categoria = {
@@ -96,6 +98,7 @@ function docToProducto(id: string, data: DocumentData) {
     imagenColor: data.imagenColor ?? "#1B2A3D",
     imagenes: data.imagenes ?? [],
     activo: data.activo ?? true,
+    creadoEnMs: data.creadoEn?.toMillis ? data.creadoEn.toMillis() : null,
     envio: data.envio ?? { retiro: true, envioDomicilio: false, costoEnvio: null, barrioRetiro: null },
   } as Producto;
 }
